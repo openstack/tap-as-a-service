@@ -13,12 +13,12 @@
           set -x
           cat > clonemap.yaml << EOF
           clonemap:
-            - name: openstack-infra/devstack-gate
+            - name: openstack/devstack-gate
               dest: devstack-gate
           EOF
           /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
-              https://git.openstack.org \
-              openstack-infra/devstack-gate
+              https://opendev.org \
+              openstack/devstack-gate
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
       environment: '{{ zuul | zuul_legacy_vars }}'
@@ -29,7 +29,7 @@
           set -x
           cat << 'EOF' >>"/tmp/dg-local.conf"
           [[local|localrc]]
-          enable_plugin tap-as-a-service https://git.openstack.org/openstack/tap-as-a-service
+          enable_plugin tap-as-a-service https://opendev.org/x/tap-as-a-service
 
           EOF
         executable: /bin/bash
@@ -50,7 +50,7 @@
           fi
 
           # Enable tap-as-a-service
-          export PROJECTS="openstack/tap-as-a-service $PROJECTS"
+          export PROJECTS="x/tap-as-a-service $PROJECTS"
           export ENABLED_SERVICES=taas,taas_agent
 
           export DEVSTACK_GATE_SETTINGS=/opt/stack/new/tap-as-a-service/devstack/devstackgaterc
