@@ -1,5 +1,5 @@
 [gerrit]
-host=review.openstack.org
+host=review.opendev.org
 port=29418
-project=openstack/tap-as-a-service.git
+project=x/tap-as-a-service.git
 defaultbranch=stable/ocata

@@ -13,8 +13,8 @@
     post-run: playbooks/legacy/tempest-dsvm-tap-as-a-service/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/tap-as-a-service
+      - openstack/devstack-gate
+      - x/tap-as-a-service
       - openstack/tempest
     irrelevant-files:
       - ^(test-|)requirements.txt$
