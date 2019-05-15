@@ -58,7 +58,6 @@ neutron==14.0.0.0b3
 openstacksdk==0.12.0
 os-client-config==1.29.0
 os-service-types==1.2.0
-os-testr==1.0.0
 os-xenapi==0.3.1
 osc-lib==1.10.0
 oslo.cache==1.29.0
@@ -129,7 +128,7 @@ sqlalchemy-migrate==0.11.0
 SQLAlchemy==1.2.5
 sqlparse==0.2.4
 statsd==3.2.2
-stestr==2.0.0
+stestr==1.0.0
 stevedore==1.28.0
 Tempita==0.5.2
 tenacity==4.9.0
