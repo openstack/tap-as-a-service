@@ -18,6 +18,7 @@ import contextlib
 import testtools
 from unittest import mock
 
+from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import rpc as n_rpc
 from neutron_lib.utils import net as n_utils
@@ -29,6 +30,7 @@ from neutron.tests.unit import testlib_api
 import neutron_taas.db.taas_db  # noqa
 import neutron_taas.extensions.taas as taas_ext
 from neutron_taas.services.taas.service_drivers import taas_agent_api
+from neutron_taas.services.taas.service_drivers import taas_rpc
 from neutron_taas.services.taas import taas_plugin
 
 
@@ -50,6 +52,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                    return_value=mock.MagicMock()).start()
         self._plugin = taas_plugin.TaasPlugin()
         self._context = context.get_admin_context()
+        self.taas_cbs = taas_rpc.TaasCallbacks(self.driver, self._plugin)
 
         self._project_id = self._tenant_id = 'tenant-X'
         self._network_id = uuidutils.generate_uuid()
@@ -86,9 +89,9 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         }
         with mock.patch.object(self._plugin, '_get_port_details',
                                return_value=self._port_details):
-            yield self._plugin.create_tap_service(self._context, req)
+            self._plugin.create_tap_service(self._context, req)
         self._tap_service['id'] = mock.ANY
-        self._tap_service['status'] = 'ACTIVE'
+        self._tap_service['status'] = constants.DOWN
 
         self.driver.assert_has_calls([
             mock.call.create_tap_service_precommit(mock.ANY),
@@ -100,6 +103,13 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         post_args = self.driver.create_tap_service_postcommit.call_args[0][0]
         self.assertEqual(self._context, post_args._plugin_context)
         self.assertEqual(self._tap_service, post_args.tap_service)
+        self.taas_cbs.set_tap_service_status(
+            self._context,
+            {'id': pre_args.tap_service['id']},
+            constants.ACTIVE, "dummyHost")
+        self._tap_service['status'] = constants.ACTIVE
+        yield self._plugin.get_tap_service(self._context,
+                                           pre_args.tap_service['id'])
 
     @contextlib.contextmanager
     def tap_flow(self, tap_service, tenant_id=None):
@@ -111,9 +121,9 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         }
         with mock.patch.object(self._plugin, '_get_port_details',
                                return_value=self._port_details):
-            yield self._plugin.create_tap_flow(self._context, req)
+            self._plugin.create_tap_flow(self._context, req)
         self._tap_flow['id'] = mock.ANY
-        self._tap_flow['status'] = 'ACTIVE'
+        self._tap_flow['status'] = constants.DOWN
         self._tap_service['id'] = mock.ANY
         self._tap_flow['vlan_filter'] = mock.ANY
 
@@ -127,6 +137,13 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         post_args = self.driver.create_tap_flow_postcommit.call_args[0][0]
         self.assertEqual(self._context, post_args._plugin_context)
         self.assertEqual(self._tap_flow, post_args.tap_flow)
+        self.taas_cbs.set_tap_flow_status(
+            self._context,
+            {'id': pre_args.tap_flow['id']},
+            constants.ACTIVE, "dummyHost")
+        self._tap_flow['status'] = constants.ACTIVE
+        yield self._plugin.get_tap_flow(self._context,
+                                        pre_args.tap_flow['id'])
 
     def test_create_tap_service(self):
         with self.tap_service():
@@ -154,6 +171,10 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                 )
             # free an tap_id and verify could reallocate same taas id
             self._plugin.delete_tap_service(self._context, ts_id_1)
+            self.taas_cbs.set_tap_service_status(self._context,
+                                                 {'id': ts_id_1},
+                                                 constants.INACTIVE,
+                                                 "dummyHost")
             tap_id_assoc_3 = self._plugin.create_tap_id_association(
                 self._context, ts_id_3)
             self.assertEqual(set([1, 2]), set([tap_id_assoc_3['taas_id'],
@@ -184,50 +205,49 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
     def test_delete_tap_service(self):
         with self.tap_service() as ts:
             self._plugin.delete_tap_service(self._context, ts['id'])
+            self._tap_service['id'] = ts['id']
         self.driver.assert_has_calls([
             mock.call.delete_tap_service_precommit(mock.ANY),
-            mock.call.delete_tap_service_postcommit(mock.ANY),
         ])
+        self._tap_service['status'] = constants.PENDING_DELETE
         pre_args = self.driver.delete_tap_service_precommit.call_args[0][0]
         self.assertEqual(self._context, pre_args._plugin_context)
         self.assertEqual(self._tap_service, pre_args.tap_service)
-        post_args = self.driver.delete_tap_service_postcommit.call_args[0][0]
-        self.assertEqual(self._context, post_args._plugin_context)
-        self.assertEqual(self._tap_service, post_args.tap_service)
+        self.taas_cbs.set_tap_service_status(self._context,
+                                             {'id': self._tap_service['id']},
+                                             constants.INACTIVE,
+                                             "dummyHost")
 
     def test_delete_tap_service_with_flow(self):
         with self.tap_service() as ts, \
-            self.tap_flow(tap_service=ts['id']):
+            self.tap_flow(tap_service=ts['id']) as tf:
             self._plugin.delete_tap_service(self._context, ts['id'])
+            self._tap_service['id'] = ts['id']
+            self._tap_flow['id'] = tf['id']
         self.driver.assert_has_calls([
             mock.call.delete_tap_flow_precommit(mock.ANY),
-            mock.call.delete_tap_flow_postcommit(mock.ANY),
             mock.call.delete_tap_service_precommit(mock.ANY),
-            mock.call.delete_tap_service_postcommit(mock.ANY),
         ])
+        self._tap_service['status'] = constants.PENDING_DELETE
+        self._tap_flow['status'] = constants.PENDING_DELETE
         pre_args = self.driver.delete_tap_flow_precommit.call_args[0][0]
         self.assertEqual(self._context, pre_args._plugin_context)
         self.assertEqual(self._tap_flow, pre_args.tap_flow)
-        post_args = self.driver.delete_tap_flow_postcommit.call_args[0][0]
-        self.assertEqual(self._context, post_args._plugin_context)
-        self.assertEqual(self._tap_flow, post_args.tap_flow)
         pre_args = self.driver.delete_tap_service_precommit.call_args[0][0]
         self.assertEqual(self._context, pre_args._plugin_context)
         self.assertEqual(self._tap_service, pre_args.tap_service)
-        post_args = self.driver.delete_tap_service_postcommit.call_args[0][0]
-        self.assertEqual(self._context, post_args._plugin_context)
-        self.assertEqual(self._tap_service, post_args.tap_service)
+        self.taas_cbs.set_tap_flow_status(self._context,
+                                          {'id': self._tap_flow['id']},
+                                          constants.INACTIVE,
+                                          "dummyHost")
+        self.taas_cbs.set_tap_service_status(self._context,
+                                             {'id': self._tap_service['id']},
+                                             constants.INACTIVE,
+                                             "dummyHost")
 
     def test_delete_tap_service_non_existent(self):
         with testtools.ExpectedException(taas_ext.TapServiceNotFound):
             self._plugin.delete_tap_service(self._context, 'non-existent')
-
-    def test_delete_tap_service_failed_on_service_driver(self):
-        attr = {'delete_tap_service_postcommit.side_effect': DummyError}
-        self.driver.configure_mock(**attr)
-        with self.tap_service() as ts:
-            with testtools.ExpectedException(DummyError):
-                self._plugin.delete_tap_service(self._context, ts['id'])
 
     def test_create_tap_flow(self):
         with self.tap_service() as ts, self.tap_flow(tap_service=ts['id']):
@@ -256,22 +276,15 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         with self.tap_service() as ts, \
             self.tap_flow(tap_service=ts['id']) as tf:
             self._plugin.delete_tap_flow(self._context, tf['id'])
-        self._tap_flow['id'] = tf['id']
+            self._tap_flow['id'] = tf['id']
         self.driver.assert_has_calls([
             mock.call.delete_tap_flow_precommit(mock.ANY),
-            mock.call.delete_tap_flow_postcommit(mock.ANY),
         ])
+        self._tap_flow['status'] = constants.PENDING_DELETE
         pre_args = self.driver.delete_tap_flow_precommit.call_args[0][0]
         self.assertEqual(self._context, pre_args._plugin_context)
         self.assertEqual(self._tap_flow, pre_args.tap_flow)
-        post_args = self.driver.delete_tap_flow_postcommit.call_args[0][0]
-        self.assertEqual(self._context, post_args._plugin_context)
-        self.assertEqual(self._tap_flow, post_args.tap_flow)
-
-    def test_delete_tap_flow_failed_on_service_driver(self):
-        with self.tap_service() as ts, \
-            self.tap_flow(tap_service=ts['id']) as tf:
-            attr = {'delete_tap_flow_postcommit.side_effect': DummyError}
-            self.driver.configure_mock(**attr)
-            with testtools.ExpectedException(DummyError):
-                self._plugin.delete_tap_flow(self._context, tf['id'])
+        self.taas_cbs.set_tap_flow_status(self._context,
+                                          {'id': self._tap_flow['id']},
+                                          constants.INACTIVE,
+                                          "dummyHost")

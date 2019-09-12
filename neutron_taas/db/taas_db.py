@@ -146,7 +146,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
                 name=t_s['name'],
                 description=t_s['description'],
                 port_id=t_s['port_id'],
-                status=constants.ACTIVE,
+                status=constants.DOWN,
             )
             context.session.add(tap_service_db)
 
@@ -211,7 +211,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
                 tap_service_id=t_f['tap_service_id'],
                 source_port=t_f['source_port'],
                 direction=t_f['direction'],
-                status=constants.ACTIVE,
+                status=constants.DOWN,
                 vlan_filter=t_f['vlan_filter'],
             )
             context.session.add(tap_flow_db)

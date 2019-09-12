@@ -90,6 +90,58 @@ class TaasCallbacks(object):
                         super(TaasPlugin, self.plugin).delete_tap_flow(
                             context, tf['id'])
 
+    def set_tap_service_status(self, context, msg, status, host=None):
+        """Handle Rpc from Agent to set the status of Tap resources."""
+        LOG.info("In RPC Call to set tap service status: Host=%s, "
+                 "MSG=%s, STATUS=%s" % (host, msg, status))
+
+        # Clear the resource from DB once agent indicates successful deletion
+        # by mech driver.
+        if status == constants.INACTIVE:
+            with context.session.begin(subtransactions=True):
+                ts = self.plugin.get_tap_service(context, msg['id'])
+                driver_context = sd_context.TapServiceContext(self.plugin,
+                                                              context,
+                                                              ts)
+                super(TaasPlugin, self.plugin).delete_tap_service(context,
+                                                                  msg['id'])
+                self.plugin.driver.delete_tap_service_postcommit(
+                    driver_context)
+            return
+
+        with context.session.begin(subtransactions=True):
+            ts = self.plugin.get_tap_service(context, msg['id'])
+            ts['status'] = status
+            super(TaasPlugin, self.plugin).update_tap_service(
+                context,
+                msg['id'],
+                {'tap_service': ts})
+
+    def set_tap_flow_status(self, context, msg, status, host=None):
+        """Handle Rpc from Agent to set the status of Tap resources."""
+        LOG.info("In RPC Call to set tap flow status: Host=%s, "
+                 "MSG=%s, STATUS=%s" % (host, msg, status))
+
+        # Clear the resource from DB once agent indicates successful deletion
+        # by mech driver.
+        if status == constants.INACTIVE:
+            with context.session.begin(subtransactions=True):
+                tf = self.plugin.get_tap_flow(context, msg['id'])
+                driver_context = sd_context.TapFlowContext(self.plugin,
+                                                           context,
+                                                           tf)
+                super(TaasPlugin, self.plugin).delete_tap_flow(context,
+                                                               msg['id'])
+                self.plugin.driver.delete_tap_flow_postcommit(driver_context)
+            return
+
+        with context.session.begin(subtransactions=True):
+            tf = self.plugin.get_tap_flow(context, msg['id'])
+            tf['status'] = status
+            super(TaasPlugin, self.plugin).update_tap_flow(context,
+                                                           msg['id'],
+                                                           {'tap_flow': tf})
+
 
 class TaasRpcDriver(service_drivers.TaasBaseDriver):
     """Taas Rpc Service Driver class"""
@@ -148,9 +200,6 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         return
 
     def delete_tap_service_precommit(self, context):
-        pass
-
-    def delete_tap_service_postcommit(self, context):
         """Send tap service deletion RPC message to agent.
 
         This RPC message includes taas_id that is added vlan_range_start to
@@ -177,6 +226,9 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         self.agent_rpc.delete_tap_service(context._plugin_context,
                                           rpc_msg, host)
         return
+
+    def delete_tap_service_postcommit(self, context):
+        pass
 
     def create_tap_flow_precommit(self, context):
         pass
@@ -208,9 +260,6 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         return
 
     def delete_tap_flow_precommit(self, context):
-        pass
-
-    def delete_tap_flow_postcommit(self, context):
         """Send tap flow deletion RPC message to agent."""
         tf = context.tap_flow
         taas_id = self._get_taas_id(context._plugin_context, tf)
@@ -275,3 +324,6 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
 
         self.agent_rpc.delete_tap_flow(context._plugin_context, rpc_msg, host)
         return
+
+    def delete_tap_flow_postcommit(self, context):
+        pass

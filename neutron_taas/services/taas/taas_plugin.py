@@ -20,6 +20,7 @@ from neutron.services import service_base
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 
 from neutron_taas.common import constants as taas_consts
@@ -123,15 +124,21 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         with context.session.begin(subtransactions=True):
             ts = self.get_tap_service(context, id)
             driver_context = sd_context.TapServiceContext(self, context, ts)
-            super(TaasPlugin, self).delete_tap_service(context, id)
-            self.driver.delete_tap_service_precommit(driver_context)
+            if ts['status'] == constants.ACTIVE:
+                ts['status'] = constants.PENDING_DELETE
+                super(TaasPlugin, self).update_tap_service(
+                    context, id, {'tap_service': ts})
+                method = self.driver.delete_tap_service_precommit
+            else:
+                super(TaasPlugin, self).delete_tap_service(context, id)
+                method = self.driver.delete_tap_service_postcommit
 
-        try:
-            self.driver.delete_tap_service_postcommit(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.error("Failed to delete tap service on driver. "
-                          "tap_sevice: %s", id)
+            try:
+                method(driver_context)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.error("Failed to delete tap service on driver. "
+                              "tap_sevice: %s", id)
 
     def create_tap_flow(self, context, tap_flow):
         LOG.debug("create_tap_flow() called")
@@ -170,13 +177,18 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         with context.session.begin(subtransactions=True):
             tf = self.get_tap_flow(context, id)
             driver_context = sd_context.TapFlowContext(self, context, tf)
-            super(TaasPlugin, self).delete_tap_flow(context, id)
-            self.driver.delete_tap_flow_precommit(driver_context)
+            if tf['status'] == constants.ACTIVE:
+                tf['status'] = constants.PENDING_DELETE
+                super(TaasPlugin, self).update_tap_flow(context, id,
+                                                        {'tap_flow': tf})
+                method = self.driver.delete_tap_flow_precommit
+            else:
+                super(TaasPlugin, self).delete_tap_flow(context, id)
+                method = self.driver.delete_tap_flow_postcommit
 
-        try:
-            self.driver.delete_tap_flow_postcommit(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
+            try:
+                method(driver_context)
+            except Exception:
                 with excutils.save_and_reraise_exception():
                     LOG.error("Failed to delete tap flow on driver. "
                               "tap_flow: %s", id)

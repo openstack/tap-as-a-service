@@ -22,6 +22,8 @@ from neutron_taas.services.taas.drivers.linux \
 from neutron_taas.common import topics
 from neutron_taas.services.taas.agents import taas_agent_api as api
 
+from neutron_lib.api.definitions import portbindings
+from neutron_lib import constants
 from neutron_lib import context as neutron_context
 from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
@@ -53,6 +55,32 @@ class TaasPluginApi(api.TaasPluginApiMixin):
 
         return
 
+    def set_tap_service_status(self, msg, status, host):
+        LOG.debug("In RPC Call for set tap service status: Host=%s, MSG=%s, "
+                  "Status=%s" %
+                  (host, msg, status))
+
+        context = neutron_context.get_admin_context()
+
+        cctxt = self.client.prepare(fanout=False)
+        cctxt.cast(context, 'set_tap_service_status', msg=msg, status=status,
+                   host=host)
+
+        return
+
+    def set_tap_flow_status(self, msg, status, host):
+        LOG.debug("In RPC Call for set tap flow status: Host=%s, MSG=%s, "
+                  "Status=%s" %
+                  (host, msg, status))
+
+        context = neutron_context.get_admin_context()
+
+        cctxt = self.client.prepare(fanout=False)
+        cctxt.cast(context, 'set_tap_flow_status', msg=msg, status=status,
+                   host=host)
+
+        return
+
 
 class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
@@ -70,7 +98,30 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             'neutron_taas.taas.agent_drivers', self.driver_type)()
         self.taas_driver.consume_api(self.agent_api)
         self.taas_driver.initialize()
-
+        self.func_dict = {
+            'create_tap_service': {
+                'msg_name': 'tap_service',
+                'set_status_func_name': 'set_tap_service_status',
+                'fail_status': constants.ERROR,
+                'succ_status': constants.ACTIVE},
+            'create_tap_flow': {
+                'msg_name': 'tap_flow',
+                'set_status_func_name': 'set_tap_flow_status',
+                'fail_status': constants.ERROR,
+                'succ_status': constants.ACTIVE},
+            'delete_tap_service': {
+                'msg_name': 'tap_service',
+                'set_status_func_name': 'set_tap_service_status',
+                'fail_status': constants.PENDING_DELETE,
+                'succ_status': constants.INACTIVE},
+            'delete_tap_flow': {
+                'msg_name': 'tap_flow',
+                'set_status_func_name': 'set_tap_flow_status',
+                'fail_status': constants.PENDING_DELETE,
+                'succ_status': constants.INACTIVE}
+        }
+        self.portbind_drivers_map = {portbindings.VNIC_DIRECT: 'sriov',
+                                     portbindings.VNIC_NORMAL: 'ovs'}
         self._taas_rpc_setup()
         TaasAgentService(self).start(self.taas_plugin_rpc, self.conf.host)
 
@@ -81,16 +132,33 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         LOG.debug("Invoking Driver for %(func_name)s from agent",
                   {'func_name': func_name})
 
+        status_msg = {'id': args[self.func_dict[func_name]['msg_name']]['id']}
+
         try:
             self.taas_driver.__getattribute__(func_name)(args)
         except Exception:
-            LOG.debug("Failed to invoke the driver")
+            LOG.error("Failed to invoke the driver")
 
-        return
+            self.taas_plugin_rpc.__getattribute__(
+                self.func_dict[func_name]['set_status_func_name'])(
+                    status_msg,
+                    self.func_dict[func_name]['fail_status'],
+                    self.conf.host)
+            return
+
+        self.taas_plugin_rpc.__getattribute__(
+            self.func_dict[func_name]['set_status_func_name'])(
+                status_msg,
+                self.func_dict[func_name]['succ_status'],
+                self.conf.host)
 
     def create_tap_service(self, context, tap_service, host):
         """Handle Rpc from plugin to create a tap_service."""
-        if host != self.conf.host:
+        if not self._driver_and_host_verification(host, tap_service['port']):
+            LOG.debug("RPC Call for Create Tap Serv. Either Host value [%s]"
+                      "(received in RPC) doesn't match the host value "
+                      "stored in agent [%s], or incompatible driver type. "
+                      "Ignoring the message." % (host, self.conf.host))
             return
         LOG.debug("In RPC Call for Create Tap Service: MSG=%s" % tap_service)
 
@@ -100,7 +168,11 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             'create_tap_service')
 
     def create_tap_flow(self, context, tap_flow_msg, host):
-        if host != self.conf.host:
+        if not self._driver_and_host_verification(host, tap_flow_msg['port']):
+            LOG.debug("RPC Call for Create Tap Flow. Either Host value [%s]"
+                      "(received in RPC) doesn't match the host value "
+                      "stored in agent [%s], or incompatible driver type. "
+                      "Ignoring the message." % (host, self.conf.host))
             return
         LOG.debug("In RPC Call for Create Tap Flow: MSG=%s" % tap_flow_msg)
 
@@ -115,6 +187,10 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         # where the source and/or destination ports associated
         # with this tap service were residing.
         #
+        if not self._is_driver_port_type_compatible(tap_service['port']):
+            LOG.debug("RPC Call for Delete Tap Service. Incompatible driver "
+                      "type. Ignoring the message. Host=[%s]" % (host))
+            return
         LOG.debug("In RPC Call for Delete Tap Service: MSG=%s" % tap_service)
 
         return self._invoke_driver_for_plugin_api(
@@ -123,10 +199,11 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             'delete_tap_service')
 
     def delete_tap_flow(self, context, tap_flow_msg, host):
-        if host != self.conf.host:
-            LOG.debug("RPC Call for Delete Tap Flow. Host value [%s]"
+        if not self._driver_and_host_verification(host, tap_flow_msg['port']):
+            LOG.debug("RPC Call for Delete Tap Flow. Either Host value [%s]"
                       "(received in RPC) doesn't match the host value "
-                      "stored in agent [%s]" % (host, self.conf.host))
+                      "stored in agent [%s], or incompatible driver type. "
+                      "Ignoring the message." % (host, self.conf.host))
             return
         LOG.debug("In RPC Call for Delete Tap Flow: MSG=%s" % tap_flow_msg)
 
@@ -153,6 +230,16 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
     def get_driver_type(self):
         return self.driver_type
+
+    def _is_driver_port_type_compatible(self, port):
+        return (
+            port.get(portbindings.VNIC_TYPE) in self.portbind_drivers_map and
+            self.portbind_drivers_map[port.get(portbindings.VNIC_TYPE)] ==
+            self.driver_type)
+
+    def _driver_and_host_verification(self, host, port):
+        return ((host == self.conf.host) and
+                self._is_driver_port_type_compatible(port))
 
 
 class TaasAgentService(service.Service):
