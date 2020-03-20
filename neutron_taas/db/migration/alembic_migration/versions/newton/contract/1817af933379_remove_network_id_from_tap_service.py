@@ -13,6 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from alembic import op
+
+
 """Remove network-id from tap-service
 
 Revision ID: 1817af933379
@@ -24,8 +27,6 @@ Create Date: 2016-04-05 21:59:28.829793
 # revision identifiers, used by Alembic.
 revision = '1817af933379'
 down_revision = '80c85b675b6e'
-
-from alembic import op
 
 
 def upgrade():

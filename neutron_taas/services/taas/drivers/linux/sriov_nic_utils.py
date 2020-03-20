@@ -180,7 +180,7 @@ class SriovNicUtils(object):
         A VF is associated with an VF number, which ip link command uses to
         configure it. This can be obtained from the PCI device filesystem.
         """
-        VIRTFN_RE = re.compile("virtfn(\d+)")
+        VIRTFN_RE = re.compile(r"virtfn(\d+)")
         virtfns_path = "/sys/bus/pci/devices/%s/physfn/virtfn*" % (pci_addr)
         vf_num = None
         LOG.debug("TaaS: pci_addr: %(pci_addr)s "

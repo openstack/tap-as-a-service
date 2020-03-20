@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_taas.db.migration import taas_init_ops
+
+
 """start neutron-taas chain
 
 Revision ID: start_neutron_taas
@@ -23,9 +26,6 @@ Create Date: 2015-11-11 02:36:00.209301
 # revision identifiers, used by Alembic.
 revision = 'start_neutron_taas'
 down_revision = None
-
-
-from neutron_taas.db.migration import taas_init_ops
 
 
 def upgrade():

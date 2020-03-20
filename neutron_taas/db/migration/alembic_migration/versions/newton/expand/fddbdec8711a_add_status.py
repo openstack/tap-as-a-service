@@ -12,6 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from alembic import op
+from neutron.db import migration
+from neutron_lib import constants
+import sqlalchemy as sa
+
+
 """add status
 
 Revision ID: fddbdec8711a
@@ -23,11 +29,6 @@ Create Date: 2016-06-06 10:54:42.252898
 # revision identifiers, used by Alembic.
 revision = 'fddbdec8711a'
 down_revision = '04625466c6fa'
-
-from alembic import op
-from neutron.db import migration
-from neutron_lib import constants
-import sqlalchemy as sa
 
 
 # milestone identifier, used by neutron-db-manage

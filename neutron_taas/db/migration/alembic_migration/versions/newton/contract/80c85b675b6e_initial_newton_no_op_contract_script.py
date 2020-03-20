@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db.migration import cli
+
+
 """initial Newton no op contract script
 
 Revision ID: 80c85b675b6e
@@ -20,7 +23,6 @@ Create Date: 2016-05-06 04:58:04.510568
 
 """
 
-from neutron.db.migration import cli
 
 # revision identifiers, used by Alembic.
 revision = '80c85b675b6e'

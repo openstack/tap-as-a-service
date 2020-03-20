@@ -13,6 +13,13 @@
 #    under the License.
 #
 
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.engine import reflection
+
+from neutron.db import migration
+
+
 """rename tenant to project
 
 Revision ID: 4086b3cffc01
@@ -24,12 +31,6 @@ Create Date: 2016-07-30 22:09:16.372917
 # revision identifiers, used by Alembic.
 revision = '4086b3cffc01'
 down_revision = '2ecce0368a62'
-
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.engine import reflection
-
-from neutron.db import migration
 
 
 _INSPECTOR = None

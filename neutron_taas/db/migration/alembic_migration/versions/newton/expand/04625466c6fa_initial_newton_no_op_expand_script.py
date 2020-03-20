@@ -12,6 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.db.migration import cli
+
+
 """initial Newton no op expand script
 
 Revision ID: 04625466c6fa
@@ -20,7 +23,6 @@ Create Date: 2016-05-06 05:17:30.172181
 
 """
 
-from neutron.db.migration import cli
 
 # revision identifiers, used by Alembic.
 revision = '04625466c6fa'

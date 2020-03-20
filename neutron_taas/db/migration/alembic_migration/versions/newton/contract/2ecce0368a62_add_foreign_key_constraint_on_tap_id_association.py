@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from alembic import op
+
+
 """add foreign key constraint on tap id association
 
 Revision ID: 2ecce0368a62
@@ -23,8 +26,6 @@ Create Date: 2016-05-19 11:39:52.892610
 # revision identifiers, used by Alembic.
 revision = '2ecce0368a62'
 down_revision = '1817af933379'
-
-from alembic import op
 
 
 def upgrade():

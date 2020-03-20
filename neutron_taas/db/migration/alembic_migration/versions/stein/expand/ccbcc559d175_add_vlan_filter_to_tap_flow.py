@@ -12,6 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from alembic import op
+import sqlalchemy as sa
+
+from neutron.db import migration
+
+
 """add_vlan_filter_to_tap_flow
 
 Revision ID: ccbcc559d175
@@ -23,11 +29,6 @@ Create Date: 2018-09-18 19:33:32.119458
 # revision identifiers, used by Alembic.
 revision = 'ccbcc559d175'
 down_revision = 'fddbdec8711a'
-
-from alembic import op
-import sqlalchemy as sa
-
-from neutron.db import migration
 
 
 # milestone identifier, used by neutron-db-manage

@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from alembic import op
+from sqlalchemy.engine import reflection
+
+import sqlalchemy as sa
+
+from neutron.db import migration
+
 """Alter TapIdAssociations to support tap id reuse
 
 Revision ID: bac61f603e39
@@ -23,13 +30,6 @@ Create Date: 2016-07-27 09:31:54.200165
 # revision identifiers, used by Alembic.
 revision = 'bac61f603e39'
 down_revision = '4086b3cffc01'
-
-from alembic import op
-from sqlalchemy.engine import reflection
-
-import sqlalchemy as sa
-
-from neutron.db import migration
 
 
 # milestone identifier, used by neutron-db-manage

@@ -255,7 +255,8 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
 
     def test_create_tap_flow_wrong_tenant_id(self):
         with self.tap_service() as ts, \
-            testtools.ExpectedException(taas_ext.TapServiceNotBelongToTenant), \
+            testtools.ExpectedException(
+                taas_ext.TapServiceNotBelongToTenant), \
             self.tap_flow(tap_service=ts['id'], tenant_id='other-tenant'):
             pass
 

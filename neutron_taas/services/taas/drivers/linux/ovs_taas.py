@@ -448,8 +448,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
     def _create_ingress_bcmc_flow_action(self, taas_id_list, out_port_id):
         flow_action = "normal"
         for taas_id in taas_id_list:
-                flow_action += (",mod_vlan_vid:%d,output:%d" %
-                                (taas_id, out_port_id))
+            flow_action += (",mod_vlan_vid:%d,output:%d" %
+                            (taas_id, out_port_id))
 
         return flow_action
 

@@ -10,7 +10,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
+import pbr.version
+
+
 # tap-as-a-service documentation build configuration file, created by
 # sphinx-quickstart on Sun May  8 12:21:42 2016.
 #
@@ -65,7 +68,6 @@ author = u'Tap-as-a-service developers'
 # built documents.
 #
 # The short X.Y version.
-import pbr.version
 version_info = pbr.version.VersionInfo('tap-as-a-service')
 version = version_info.version_string_with_vcs()
 # The full version, including alpha/beta/rc tags.
