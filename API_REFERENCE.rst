@@ -236,6 +236,42 @@ extension
 
 TaaS CLI Reference
 ==================
+
+Openstack CLI
+-------------
+
+OpenStackClient provides
+`the basic network commands <https://docs.openstack.org/python-openstackclient/latest/cli/command-list.html>`__
+and tap-as-a-service has an extension for taas related commands.
+
+* Create tap service: **openstack tap service create** --name <name of the tap service> --port <name or ID of the port on which the traffic is delivered>
+
+* List tap services: **openstack tap service list**
+
+* Show tap service: **openstack tap service show** <tap service id/tap service name>
+
+* Delete tap service: **openstack tap service delete** <tap service id/tap service name>
+
+* Update tap service: **openstack tap service update** <tap service id/tap service name> --name <new name of the tap service> --description <new description of the tap service>
+
+* Create tap flow: **openstack tap flow create** --name <name of the tap flow> --port <name or ID of the Source port to which the Tap Flow is connected> --tap-service <name or ID of the tap service> --direction <Direction of the Tap flow. Possible options are: IN, OUT, BOTH> --vlan-filter <LAN Ids to be mirrored in the form of range string>
+
+* List tap flows **openstack tap flow list**
+
+* Show tap flow **openstack tap flow show** <tap flow id/tap flow name>
+
+* Delete tap flow **openstack tap flow delete** <tap flow id/tap flow name>
+
+* Update tap flow **openstack tap flow update** <tap flow id/tap flow name> --name <new name of the tap flow> --description <new description of the tap flow>
+
+Neutron CLI
+-----------
+
+.. warning::
+
+   neutron CLI is now deprecated, and will be removed in the future.
+   Use openstack CLI instead.
+
 The TaaS commands can be executed using TaaS CLI, which is integrated with neutron.
 It can be used to send REST request and interact with the TaaS
 extension. Given below are the detail of the CLIs:
