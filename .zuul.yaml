@@ -2,6 +2,7 @@
     templates:
       - openstack-lower-constraints-jobs
       - openstack-cover-jobs-neutron
+      - build-openstack-docs-pti
       - check-requirements
       - openstack-python3-ussuri-jobs-neutron
       - tap-as-a-service-tempest-plugin-jobs

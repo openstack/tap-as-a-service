@@ -151,7 +151,7 @@ schemas.
 | status      | String | R, all   | N/A       | N/A           | The operation status of |
 |             |        |          |           |               | the resource            |
 |             |        |          |           |               | (ACTIVE, PENDING_foo,   |
-|             |        |          |           |               |  ERROR, ...)            |
+|             |        |          |           |               | ERROR, ...)             |
 +-------------+--------+----------+-----------+---------------+-------------------------+
 
 2. tap_flow
@@ -186,7 +186,7 @@ schemas.
 | status         | String | R, all   | N/A       | N/A           | The operation status of |
 |                |        |          |           |               | the resource            |
 |                |        |          |           |               | (ACTIVE, PENDING_foo,   |
-|                |        |          |           |               |  ERROR, ...)            |
+|                |        |          |           |               | ERROR, ...)             |
 +----------------+--------+----------+-----------+---------------+-------------------------+
 
 
@@ -469,6 +469,3 @@ References
 
 .. [2] Service base and insertion
    https://review.openstack.org/#/c/93128
-
-.. [3] NFV unaddressed interfaces
-   https://review.openstack.org/#/c/97715/

@@ -22,9 +22,14 @@ sys.path.insert(0, os.path.abspath('../..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc',
-    #'sphinx.ext.intersphinx',
-    'oslosphinx'
+    'openstackdocstheme'
 ]
+
+# openstackdocstheme options
+repository_name = 'x/tap-as-a-service'
+bug_project = 'tap-as-a-service'
+bug_tag = ''
+html_theme = 'openstackdocs'
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.
@@ -66,10 +71,19 @@ htmlhelp_basename = '%sdoc' % project
 # [howto/manual]).
 latex_documents = [
     ('index',
-     '%s.tex' % project,
-     u'%s Documentation' % project,
+     'doc-tap-as-a-service.tex',
+     u'Tap as a Service Documentation',
      u'OpenStack Foundation', 'manual'),
 ]
 
 # Example configuration for intersphinx: refer to the Python standard library.
 #intersphinx_mapping = {'http://docs.python.org/': None}
+
+latex_elements = {
+    'makeindex': '',
+    'printindex': '',
+    'preamble': r'\setcounter{tocdepth}{3}',
+    # openany: Skip blank pages in generated PDFs
+    # oneside: Use the same page layout for both even and odd pages
+    'extraclassoptions': 'openany,oneside',
+}
