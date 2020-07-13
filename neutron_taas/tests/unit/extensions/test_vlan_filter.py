@@ -14,8 +14,8 @@
 #    under the License.
 
 import copy
+from unittest import mock
 
-import mock
 from neutron_taas.common import constants as taas_consts
 from neutron_taas.extensions import taas as taas_ext
 from neutron_taas.extensions import vlan_filter as vlan_filter_ext

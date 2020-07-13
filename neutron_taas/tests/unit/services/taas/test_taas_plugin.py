@@ -15,8 +15,8 @@
 
 import contextlib
 
-import mock
 import testtools
+from unittest import mock
 
 from neutron_lib import context
 from neutron_lib import rpc as n_rpc

@@ -14,7 +14,7 @@
 
 
 import copy
-import mock
+from unittest import mock
 
 from neutron_taas.services.taas.drivers.linux import sriov_nic_exceptions \
     as taas_exc

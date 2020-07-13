@@ -18,8 +18,8 @@
 #
 
 import copy
-import mock
 import re
+from unittest import mock
 
 from neutron_taas.common import utils as common_utils
 from neutron_taas.services.taas.drivers.linux import sriov_nic_exceptions \
