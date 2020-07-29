@@ -131,14 +131,6 @@ cfg.CONF.register_opts(taas_quota_opts, 'QUOTAS')
 
 
 TaasOpts = [
-    cfg.StrOpt(
-        'driver',
-        default='',
-        help=_("Name of the TaaS Driver")),
-    cfg.BoolOpt(
-        'enabled',
-        default=False,
-        help=_("Enable TaaS")),
     cfg.IntOpt(
         'vlan_range_start',
         default=3900,
