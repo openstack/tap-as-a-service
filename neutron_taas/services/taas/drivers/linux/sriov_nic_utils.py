@@ -88,7 +88,8 @@ class SriovNicUtils(object):
                 try:
                     LOG.info("TaaS executing sysfs_command %(command)s",
                              {'command': commit_cmd})
-                    utils.execute(commit_cmd, run_as_root=True)
+                    utils.execute(commit_cmd, run_as_root=True,
+                                  privsep_exec=True)
                 except (OSError, RuntimeError, IndexError, ValueError) as e:
                     LOG.error("Exception while executing Sysfs command "
                               "Exception: %s", e)
@@ -105,7 +106,8 @@ class SriovNicUtils(object):
                 try:
                     LOG.info("TaaS executing sysfs_command %(command)s",
                              {'command': commit_cmd})
-                    utils.execute(commit_cmd, run_as_root=True)
+                    utils.execute(commit_cmd, run_as_root=True,
+                                  privsep_exec=True)
                 except (OSError, RuntimeError, IndexError, ValueError) as e:
                     LOG.error("Exception while executing Sysfs command "
                               "Exception: %s", e)
@@ -125,7 +127,8 @@ class SriovNicUtils(object):
             try:
                 LOG.info("TaaS executing sysfs_command %(command)s",
                          {'command': commit_cmd})
-                utils.execute(commit_cmd, run_as_root=True)
+                utils.execute(commit_cmd, run_as_root=True,
+                              privsep_exec=True)
             except (OSError, RuntimeError, IndexError, ValueError) as e:
                 LOG.error("Exception while executing Sysfs command "
                           "Exception: %s", e)

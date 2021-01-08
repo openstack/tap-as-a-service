@@ -265,7 +265,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         ovs_port_name = ovs_port.port_name
         linux_br_name = ovs_port_name.replace('qvo', 'qbr')
         utils.execute(['brctl', 'setageing', linux_br_name, 0],
-                      run_as_root=True)
+                      run_as_root=True, privsep_exec=True)
 
         return
 
@@ -425,7 +425,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
     def _create_tunnel_flood_flow_action(self):
 
         args = ["ovs-vsctl", "list-ports", "br-tun"]
-        res = utils.execute(args, run_as_root=True)
+        res = utils.execute(args, run_as_root=True, privsep_exec=True)
 
         port_name_list = res.splitlines()
 

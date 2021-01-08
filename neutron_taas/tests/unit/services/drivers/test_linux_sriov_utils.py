@@ -200,7 +200,7 @@ class TestSriovNicUtils(base.TaasTestCase):
         egress_cmd = ['i40e_sysfs_command', 'p2p1', '18',
                       'egress_mirror', 'add', '9']
         mock_neutron_utils.execute.assert_called_once_with(
-            egress_cmd, run_as_root=True)
+            egress_cmd, run_as_root=True, privsep_exec=True)
 
     @mock.patch.object(sriov_nic_utils, 'utils')
     @mock.patch.object(sriov_nic_utils, 'os')
@@ -212,7 +212,7 @@ class TestSriovNicUtils(base.TaasTestCase):
         ingress_cmd = ['i40e_sysfs_command', 'p2p1', '18',
                        'ingress_mirror', 'add', '9']
         mock_neutron_utils.execute.assert_called_once_with(
-            ingress_cmd, run_as_root=True)
+            ingress_cmd, run_as_root=True, privsep_exec=True)
 
     @mock.patch.object(sriov_nic_utils, 'utils')
     @mock.patch.object(sriov_nic_utils, 'os')
@@ -233,7 +233,7 @@ class TestSriovNicUtils(base.TaasTestCase):
         egress_cmd = ['i40e_sysfs_command', 'p2p1', '18',
                       'egress_mirror', 'rem', '9']
         mock_neutron_utils.execute.assert_called_once_with(
-            egress_cmd, run_as_root=True)
+            egress_cmd, run_as_root=True, privsep_exec=True)
 
     @mock.patch.object(sriov_nic_utils, 'utils')
     @mock.patch.object(sriov_nic_utils, 'os')
@@ -245,7 +245,7 @@ class TestSriovNicUtils(base.TaasTestCase):
         ingress_cmd = ['i40e_sysfs_command', 'p2p1', '18',
                        'ingress_mirror', 'rem', '9']
         mock_neutron_utils.execute.assert_called_once_with(
-            ingress_cmd, run_as_root=True)
+            ingress_cmd, run_as_root=True, privsep_exec=True)
 
     @mock.patch.object(sriov_nic_utils, 'utils')
     @mock.patch.object(sriov_nic_utils, 'os')
@@ -266,4 +266,4 @@ class TestSriovNicUtils(base.TaasTestCase):
             'rem', {'pf_device': 'p2p1', 'vf_index': '9'}, {'vf_index': '18'},
             "4,11-13", False, "FAKE")
         mock_neutron_utils.execute.assert_called_once_with(
-            cmd, run_as_root=True)
+            cmd, run_as_root=True, privsep_exec=True)
