@@ -256,16 +256,23 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
 
         #
         # Disable mac-address learning in the Linux bridge to which
-        # the OVS port is attached (via the veth pair). This will
-        # effectively turn the bridge into a hub, ensuring that all
-        # incoming mirrored traffic reaches the tap interface (used
-        # for attaching a VM to the bridge) irrespective of the
+        # the OVS port is attached (via the veth pair) if the system
+        # uses OVSHybridIptablesFirewallDriver (Linux bridge & OVS).
+        # This will effectively turn the bridge into a hub, ensuring
+        # that all incoming mirrored traffic reaches the tap interface
+        # (used for attaching a VM to the bridge) irrespective of the
         # destination mac addresses in mirrored packets.
         #
-        ovs_port_name = ovs_port.port_name
-        linux_br_name = ovs_port_name.replace('qvo', 'qbr')
-        utils.execute(['brctl', 'setageing', linux_br_name, 0],
-                      run_as_root=True, privsep_exec=True)
+
+        # Get hybrid plug info
+        vif_details = port.get('binding:vif_details')
+        is_hybrid_plug = vif_details.get('ovs_hybrid_plug')
+
+        if is_hybrid_plug:
+            ovs_port_name = ovs_port.port_name
+            linux_br_name = ovs_port_name.replace('qvo', 'qbr')
+            utils.execute(['brctl', 'setageing', linux_br_name, 0],
+                          run_as_root=True, privsep_exec=True)
 
         return
 
