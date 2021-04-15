@@ -14,22 +14,7 @@
 # under the License.
 
 from neutron_lib import rpc as n_rpc
-from neutron_taas._i18n import _
-from oslo_config import cfg
 import oslo_messaging as messaging
-
-
-TaasOpts = [
-    cfg.StrOpt(
-        'driver',
-        default='',
-        help=_("Name of the TaaS Driver")),
-    cfg.BoolOpt(
-        'enabled',
-        default=False,
-        help=_("Enable TaaS")),
-]
-cfg.CONF.register_opts(TaasOpts, 'taas')
 
 
 class TaasPluginApiMixin(object):
