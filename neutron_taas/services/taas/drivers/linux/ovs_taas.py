@@ -17,9 +17,8 @@
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import utils
 from neutron.conf.agent import common
-# from neutron.plugins.openvswitch.common import constants as ovs_consts
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-    as ovs_consts
+from neutron_lib import constants as n_consts
+
 from neutron_taas.services.taas.agents.extensions import taas as taas_base
 import neutron_taas.services.taas.drivers.linux.ovs_constants \
     as taas_ovs_consts
@@ -237,8 +236,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              actions="output:%s" % str(patch_tap_int_id))
 
         # Add flow(s) in br-tun
-        for tunnel_type in ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.add_flow(table=ovs_consts.TUN_TABLE[tunnel_type],
+        for tunnel_type in n_consts.TUNNEL_NETWORK_TYPES:
+            self.tun_br.add_flow(table=n_consts.TUN_TABLE[tunnel_type],
                                  priority=1,
                                  tun_id=taas_id,
                                  actions=(
@@ -295,8 +294,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                  dl_vlan=taas_id)
 
         # Delete flow(s) from br-tun
-        for tunnel_type in ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.delete_flows(table=ovs_consts.TUN_TABLE[tunnel_type],
+        for tunnel_type in n_consts.TUNNEL_NETWORK_TYPES:
+            self.tun_br.delete_flows(table=n_consts.TUN_TABLE[tunnel_type],
                                      tun_id=taas_id)
 
         self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_CHECK,
@@ -364,8 +363,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
             #                                    patch_int_tap_id)
 
         # Add flow(s) in br-tun
-        for tunnel_type in ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.add_flow(table=ovs_consts.TUN_TABLE[tunnel_type],
+        for tunnel_type in n_consts.TUNNEL_NETWORK_TYPES:
+            self.tun_br.add_flow(table=n_consts.TUN_TABLE[tunnel_type],
                                  priority=1,
                                  tun_id=taas_id,
                                  actions=(
