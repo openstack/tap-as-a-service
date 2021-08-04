@@ -194,8 +194,9 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
                               "tap_flow: %s", id)
 
     @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
-    def handle_delete_port(self, resource, event, trigger, context, **kwargs):
-        deleted_port = kwargs['port']
+    def handle_delete_port(self, resource, event, trigger, payload):
+        context = payload.context
+        deleted_port = payload.latest_state
         if not deleted_port:
             LOG.error("TaaS: Handle Delete Port: Invalid port object received")
             return
