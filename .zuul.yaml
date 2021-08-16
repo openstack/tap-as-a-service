@@ -16,20 +16,22 @@
     name: tap-as-a-service-tempest
     parent: devstack-tempest
     nodeset: openstack-single-node-focal
-    timeout: 7800
+    timeout: 10800
     vars:
       TAAS_SERVICE_DRIVER: "TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"
       tox_envlist: all
       devstack_services:
         taas: true
       devstack_plugins:
-        tap-as-a-service: https://opendev.org/x/tap-as-a-service
+        tap-as-a-service: https://opendev.org/openstack/tap-as-a-service
       tempest_plugins:
         - tap-as-a-service-tempest-plugin
       tempest_test_regex: (^tempest|^neutron_taas_tempest_plugin)
     required-projects:
       - openstack/devstack-gate
-      - x/tap-as-a-service
+      - openstack/tap-as-a-service
+      # TODO(lajoskatona): remove this when all tests will be merged to
+      # neutron-tempest-plugin
       - x/tap-as-a-service-tempest-plugin
       - openstack/tempest
     irrelevant-files:

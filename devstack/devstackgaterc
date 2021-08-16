@@ -37,6 +37,6 @@ r="$r(?:.*\[.*\bslow\b.*\])"
 # End list of exclusions.
 r="$r)"
 
-r="$r(tempest\.(api.network\.|scenario.test_network)|neutron_taas\.).*$"
+r="$r(tempest\.(api.network\.|scenario.test_network)|neutron_taas_tempest_plugin\.).*$"
 
 export DEVSTACK_GATE_TEMPEST_REGEX="$r"
