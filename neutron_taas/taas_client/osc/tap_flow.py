@@ -146,9 +146,6 @@ class ListTapFlow(command.Lister):
                            retrieve_all=True, params=params)[TAP_FLOWS]
         headers, columns = column_util.get_column_definitions(
             _attr_map, long_listing=True)
-        print('XXXXX headers=%s ' % headers)
-        print('XXXXX columns=%s ' % columns)
-        print('XXXXX objs=%s ' % objs)
         return (headers, (osc_utils.get_dict_properties(
             s, columns, formatters=_formatters) for s in objs))
 
