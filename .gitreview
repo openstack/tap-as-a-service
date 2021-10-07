@@ -1,4 +1,4 @@
 [gerrit]
 host=review.opendev.org
 port=29418
-project=x/tap-as-a-service.git
+project=openstack/tap-as-a-service.git
