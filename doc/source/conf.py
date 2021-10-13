@@ -26,7 +26,7 @@ extensions = [
 ]
 
 # openstackdocstheme options
-repository_name = 'x/tap-as-a-service'
+repository_name = 'openstack/tap-as-a-service'
 bug_project = 'tap-as-a-service'
 bug_tag = ''
 html_theme = 'openstackdocs'
