@@ -16,11 +16,12 @@
 from neutron.tests.unit import testlib_api
 
 from neutron_lib import context
+from neutron_lib.exceptions import taas as taas_exc
+
 from oslo_utils import importutils
 from oslo_utils import uuidutils
 
 from neutron_taas.db import taas_db
-from neutron_taas.extensions import taas
 
 
 DB_PLUGIN_KLAAS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
@@ -152,7 +153,7 @@ class TaaSDbTestCase(testlib_api.SqlTestCase):
         data = self._get_tap_service_data()
         result = self._create_tap_service(data)
         self._delete_tap_service(result['id'])
-        self.assertRaises(taas.TapServiceNotFound,
+        self.assertRaises(taas_exc.TapServiceNotFound,
                           self._get_tap_service, result['id'])
 
     def test_tap_flow_get(self):
@@ -225,5 +226,5 @@ class TaaSDbTestCase(testlib_api.SqlTestCase):
                                           name=tf_name)
         tf = self._create_tap_flow(tf_data)
         self._delete_tap_flow(tf['id'])
-        self.assertRaises(taas.TapFlowNotFound,
+        self.assertRaises(taas_exc.TapFlowNotFound,
                           self._get_tap_flow, tf['id'])

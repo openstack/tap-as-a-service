@@ -18,10 +18,12 @@ from webob import exc
 
 from oslo_utils import uuidutils
 
+from neutron.api import extensions
 from neutron.tests.unit.api.v2 import test_base as test_api_v2
-from neutron.tests.unit.extensions import base as test_api_v2_extension
+from neutron.tests.unit.extensions import base as test_extensions_base
+from neutron_lib.api.definitions import taas as taas_api
 
-from neutron_taas.extensions import taas as taas_ext
+from neutron_taas import extensions as taas_extensions
 
 _uuid = uuidutils.generate_uuid
 _get_path = test_api_v2._get_path
@@ -30,18 +32,22 @@ TAP_SERVICE_PATH = 'taas/tap_services'
 TAP_FLOW_PATH = 'taas/tap_flows'
 
 
-class TaasExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
-    fmt = 'json'
+class TaasExtensionTestCase(test_extensions_base.ExtensionTestCase):
 
     def setUp(self):
+        extensions.append_api_extensions_path(taas_extensions.__path__)
         super(TaasExtensionTestCase, self).setUp()
+        plural_mappings = {'tap_service': 'tap_services',
+                           'tap_flow': 'tap_flows'}
         self.setup_extension(
-            'neutron_taas.extensions.taas.TaasPluginBase',
-            'TAAS',
-            taas_ext.Taas,
+            '%s.%s' % (taas_extensions.taas.TaasPluginBase.__module__,
+                       taas_extensions.taas.TaasPluginBase.__name__),
+            taas_api.ALIAS,
+            taas_extensions.taas.Taas,
             'taas',
-            plural_mappings={}
-        )
+            plural_mappings=plural_mappings,
+            translate_resource_name=False)
+        self.instance = self.plugin.return_value
 
     def test_create_tap_service(self):
         tenant_id = _uuid()
@@ -56,7 +62,7 @@ class TaasExtensionTestCase(test_api_v2_extension.ExtensionTestCase):
         expected_ret_val = copy.copy(data['tap_service'])
         expected_ret_val.update({'id': _uuid()})
         instance = self.plugin.return_value
-        instance.create_tap_service.return_value = expected_ret_val
+        self.instance.create_tap_service.return_value = expected_ret_val
 
         res = self.api.post(_get_path(TAP_SERVICE_PATH, fmt=self.fmt),
                             self.serialize(data),

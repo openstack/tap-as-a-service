@@ -20,6 +20,7 @@ from unittest import mock
 
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.exceptions import taas as taas_exc
 from neutron_lib import rpc as n_rpc
 from neutron_lib.utils import net as n_utils
 from oslo_config import cfg
@@ -28,7 +29,6 @@ from oslo_utils import uuidutils
 from neutron.tests.unit import testlib_api
 
 import neutron_taas.db.taas_db  # noqa
-import neutron_taas.extensions.taas as taas_ext
 from neutron_taas.services.taas.service_drivers import taas_agent_api
 from neutron_taas.services.taas.service_drivers import taas_rpc
 from neutron_taas.services.taas import taas_plugin
@@ -164,7 +164,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                 self._context, ts_id_2)
             self.assertEqual(set([1, 2]), set([tap_id_assoc_1['taas_id'],
                              tap_id_assoc_2['taas_id']]))
-            with testtools.ExpectedException(taas_ext.TapServiceLimitReached):
+            with testtools.ExpectedException(taas_exc.TapServiceLimitReached):
                 self._plugin.create_tap_id_association(
                     self._context,
                     ts_4['id']
@@ -182,7 +182,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
 
     def test_create_tap_service_wrong_tenant_id(self):
         self._port_details['tenant_id'] = 'other-tenant'
-        with testtools.ExpectedException(taas_ext.PortDoesNotBelongToTenant), \
+        with testtools.ExpectedException(taas_exc.PortDoesNotBelongToTenant), \
             self.tap_service():
             pass
         self.assertEqual([], self.driver.mock_calls)
@@ -246,7 +246,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                                              "dummyHost")
 
     def test_delete_tap_service_non_existent(self):
-        with testtools.ExpectedException(taas_ext.TapServiceNotFound):
+        with testtools.ExpectedException(taas_exc.TapServiceNotFound):
             self._plugin.delete_tap_service(self._context, 'non-existent')
 
     def test_create_tap_flow(self):
@@ -256,7 +256,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
     def test_create_tap_flow_wrong_tenant_id(self):
         with self.tap_service() as ts, \
             testtools.ExpectedException(
-                taas_ext.TapServiceNotBelongToTenant), \
+                taas_exc.TapServiceNotBelongToTenant), \
             self.tap_flow(tap_service=ts['id'], tenant_id='other-tenant'):
             pass
 

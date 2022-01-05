@@ -23,10 +23,10 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import taas as taas_exc
 
 from neutron_taas.common import constants as taas_consts
 from neutron_taas.db import taas_db
-from neutron_taas.extensions import taas as taas_ex
 from neutron_taas.services.taas.service_drivers import (service_driver_context
                                                         as sd_context)
 
@@ -84,7 +84,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
 
         # Check if the port is owned by the tenant.
         if port['tenant_id'] != tenant_id:
-            raise taas_ex.PortDoesNotBelongToTenant()
+            raise taas_exc.PortDoesNotBelongToTenant()
 
         # Extract the host where the port is located
         host = port['binding:host_id']
@@ -155,7 +155,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         ts_tenant_id = ts['tenant_id']
 
         if tenant_id != ts_tenant_id:
-            raise taas_ex.TapServiceNotBelongToTenant()
+            raise taas_exc.TapServiceNotBelongToTenant()
 
         # create tap flow in the db model
         tf = super(TaasPlugin, self).create_tap_flow(context, tap_flow)
@@ -213,7 +213,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         for t_s in t_s_collection:
             try:
                 self.delete_tap_service(context, t_s['id'])
-            except taas_ex.TapServiceNotFound:
+            except taas_exc.TapServiceNotFound:
                 LOG.debug("Not found tap_service: %s", t_s['id'])
 
         t_f_collection = self.get_tap_flows(
@@ -223,5 +223,5 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         for t_f in t_f_collection:
             try:
                 self.delete_tap_flow(context, t_f['id'])
-            except taas_ex.TapFlowNotFound:
+            except taas_exc.TapFlowNotFound:
                 LOG.debug("Not found tap_flow: %s", t_f['id'])

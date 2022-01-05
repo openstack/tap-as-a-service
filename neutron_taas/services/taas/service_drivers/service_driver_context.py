@@ -12,7 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from neutron_taas.extensions import taas
+from neutron_lib.exceptions import taas
 
 from oslo_log import log
 

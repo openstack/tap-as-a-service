@@ -24,11 +24,13 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
 from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
+from neutron_lib.exceptions import taas as taas_exc
 from neutron_lib.plugins import directory
-from neutron_taas.extensions import taas
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
+
+from neutron_taas.extensions import taas as taas_extension
 
 LOG = logging.getLogger(__name__)
 
@@ -82,7 +84,7 @@ class TapIdAssociation(model_base.BASEV2):
         primaryjoin='TapService.id==TapIdAssociation.tap_service_id')
 
 
-class Taas_db_Mixin(taas.TaasPluginBase):
+class Taas_db_Mixin(taas_extension.TaasPluginBase):
 
     def _core_plugin(self):
         return directory.get_plugin()
@@ -93,7 +95,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         try:
             return model_query.get_by_id(context, TapService, id)
         except exc.NoResultFound:
-            raise taas.TapServiceNotFound(tap_id=id)
+            raise taas_exc.TapServiceNotFound(tap_id=id)
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
@@ -103,14 +105,14 @@ class Taas_db_Mixin(taas.TaasPluginBase):
             return query.filter(TapIdAssociation.tap_service_id ==
                                 tap_service_id).one()
         except exc.NoResultFound:
-            raise taas.TapServiceNotFound(tap_id=tap_service_id)
+            raise taas_exc.TapServiceNotFound(tap_id=tap_service_id)
 
     @db_api.CONTEXT_READER
     def _get_tap_flow(self, context, id):
         try:
             return model_query.get_by_id(context, TapFlow, id)
         except exc.NoResultFound:
-            raise taas.TapFlowNotFound(flow_id=id)
+            raise taas_exc.TapFlowNotFound(flow_id=id)
 
     def _make_tap_service_dict(self, tap_service, fields=None):
         res = {'id': tap_service['id'],
@@ -188,7 +190,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
             query.update({"tap_service_id": tap_service_id})
             return query
         # not found
-        raise taas.TapServiceLimitReached()
+        raise taas_exc.TapServiceLimitReached()
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_WRITER
@@ -235,7 +237,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         count = context.session.query(TapService).filter_by(id=id).delete()
 
         if not count:
-            raise taas.TapServiceNotFound(tap_id=id)
+            raise taas_exc.TapServiceNotFound(tap_id=id)
 
     @db_api.CONTEXT_WRITER
     def delete_tap_flow(self, context, id):
@@ -243,7 +245,7 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         count = context.session.query(TapFlow).filter_by(id=id).delete()
 
         if not count:
-            raise taas.TapFlowNotFound(flow_id=id)
+            raise taas_exc.TapFlowNotFound(flow_id=id)
 
     def get_tap_service(self, context, id, fields=None):
         LOG.debug("get_tap_service() called")

@@ -17,13 +17,13 @@ import copy
 from unittest import mock
 
 from neutron_taas.common import constants as taas_consts
-from neutron_taas.extensions import taas as taas_ext
-from neutron_taas.extensions import vlan_filter as vlan_filter_ext
 from neutron_taas.tests.unit.extensions import test_taas as test_taas_ext
 from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.tests.unit.api.v2 import test_base as test_api_v2
+from neutron_lib.api.definitions import taas as taas_api_def
+from neutron_lib.api.definitions import vlan_filter as vlan_filter_ext
 import webtest
 
 
@@ -32,19 +32,12 @@ _get_path = test_api_v2._get_path
 
 
 class VlanFilterExtensionTestCase(test_taas_ext.TaasExtensionTestCase):
-    def setUp(self):
-        super(test_taas_ext.TaasExtensionTestCase, self).setUp()
 
-        attr_map = taas_ext.RESOURCE_ATTRIBUTE_MAP
+    def setUp(self):
+        super(VlanFilterExtensionTestCase, self).setUp()
+        attr_map = taas_api_def.RESOURCE_ATTRIBUTE_MAP
         attr_map['tap_flows'].update(
-            vlan_filter_ext.EXTENDED_ATTRIBUTES_2_0['tap_flows'])
-        self.setup_extension(
-            'neutron_taas.extensions.taas.TaasPluginBase',
-            'TAAS',
-            taas_ext.Taas,
-            'taas',
-            plural_mappings={}
-        )
+            vlan_filter_ext.RESOURCE_ATTRIBUTE_MAP['tap_flows'])
 
     def _get_expected_tap_flow(self, data):
         ret = super(VlanFilterExtensionTestCase,

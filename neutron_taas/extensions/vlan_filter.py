@@ -13,47 +13,10 @@
 # under the License.
 #
 
-from neutron_lib.api import extensions
-
-# Regex for a comma-seperate list of integer values (VLANs)
-# For ex. "9,18,27-36,45-54" or "0-4095" or "9,18,27,36"
-RANGE_REGEX = r"^([0-9]+(-[0-9]+)?)(,([0-9]+(-[0-9]+)?))*$"
-
-EXTENDED_ATTRIBUTES_2_0 = {
-    'tap_flows': {
-        'vlan_filter': {'allow_post': True, 'allow_put': False,
-                        'validate': {'type:regex_or_none': RANGE_REGEX},
-                        'is_visible': True, 'default': None}
-    }
-}
+from neutron_lib.api.definitions import vlan_filter
+from neutron_lib.api import extensions as api_extensions
 
 
-class Vlan_filter(extensions.ExtensionDescriptor):
-    """Extension class supporting vlan_filter for tap_flows."""
-
-    @classmethod
-    def get_name(cls):
-        return "TaaS Vlan Filter Extension"
-
-    @classmethod
-    def get_alias(cls):
-        return 'taas-vlan-filter'
-
-    @classmethod
-    def get_description(cls):
-        return "Vlan Filter support for Tap Flows."
-
-    @classmethod
-    def get_updated(cls):
-        return "2019-01-23T00:00:00-00:00"
-
-    def get_extended_resources(self, version):
-        if version == "2.0":
-            return EXTENDED_ATTRIBUTES_2_0
-        return {}
-
-    def get_required_extensions(self):
-        return ["taas"]
-
-    def get_optional_extensions(self):
-        return []
+class Vlan_filter(api_extensions.APIExtensionDescriptor):
+    """Extension class supporting taas VLAN filtering."""
+    api_definition = vlan_filter
