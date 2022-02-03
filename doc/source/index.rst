@@ -17,6 +17,8 @@ Contents:
    contributing
    specs/index
    presentations
+   usage
+   mirroring_with_ovs_driver
 
 Indices and tables
 ==================
