@@ -30,13 +30,13 @@ class TaasAgentApi(object):
         self.client = n_rpc.get_client(target)
         return
 
-    def create_tap_service(self, context, tap_service, host):
+    def create_tap_service(self, context, tap_service_msg, host):
         LOG.debug("In RPC Call for Create Tap Service: Host=%s, MSG=%s" %
-                  (host, tap_service))
+                  (host, tap_service_msg))
 
         cctxt = self.client.prepare(fanout=True)
-        cctxt.cast(context, 'create_tap_service', tap_service=tap_service,
-                   host=host)
+        cctxt.cast(context, 'create_tap_service',
+                   tap_service=tap_service_msg, host=host)
 
         return
 
@@ -50,13 +50,13 @@ class TaasAgentApi(object):
 
         return
 
-    def delete_tap_service(self, context, tap_service, host):
+    def delete_tap_service(self, context, tap_service_msg, host):
         LOG.debug("In RPC Call for Delete Tap Service: Host=%s, MSG=%s" %
-                  (host, tap_service))
+                  (host, tap_service_msg))
 
         cctxt = self.client.prepare(fanout=True)
-        cctxt.cast(context, 'delete_tap_service', tap_service=tap_service,
-                   host=host)
+        cctxt.cast(context, 'delete_tap_service',
+                   tap_service=tap_service_msg, host=host)
 
         return
 

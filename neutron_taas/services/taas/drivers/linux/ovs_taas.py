@@ -24,6 +24,7 @@ import neutron_taas.services.taas.drivers.linux.ovs_constants \
     as taas_ovs_consts
 import neutron_taas.services.taas.drivers.linux.ovs_utils as taas_ovs_utils
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 
 
@@ -200,9 +201,18 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
     def consume_api(self, agent_api):
         self.agent_api = agent_api
 
-    def create_tap_service(self, tap_service):
-        taas_id = tap_service['taas_id']
-        port = tap_service['port']
+    @log_helpers.log_method_call
+    def create_tap_service(self, tap_service_msg):
+        """Create a tap service
+
+        :param tap_service_msg: a dict of the tap_service,
+                                taas_id which is the VLAN Id reserved for
+                                mirroring for this tap-service and the neutron
+                                port of the tap-service:
+                                {tap_service: {}, taas_id: VID, port: {}}
+        """
+        taas_id = tap_service_msg['taas_id']
+        port = tap_service_msg['port']
 
         # Get OVS port id for tap service port
         ovs_port = self.int_br.get_vif_port_by_id(port['id'])
@@ -275,8 +285,17 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
 
         return
 
-    def delete_tap_service(self, tap_service):
-        taas_id = tap_service['taas_id']
+    @log_helpers.log_method_call
+    def delete_tap_service(self, tap_service_msg):
+        """Delete a tap service
+
+        :param tap_service_msg: a dict of the tap_service,
+                                taas_id which is the VLAN Id reserved for
+                                mirroring for this tap-service and the neutron
+                                port of the tap-service:
+                                {tap_service: {}, taas_id: VID, port: {}}
+        """
+        taas_id = tap_service_msg['taas_id']
 
         # Get patch port ID
         patch_int_tap_id = self.int_br.get_port_ofport('patch-int-tap')
@@ -306,10 +325,22 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
 
         return
 
-    def create_tap_flow(self, tap_flow):
-        taas_id = tap_flow['taas_id']
-        port = tap_flow['port']
-        direction = tap_flow['tap_flow']['direction']
+    @log_helpers.log_method_call
+    def create_tap_flow(self, tap_flow_msg):
+        """Create a tap flow
+
+        :param tap_flow_msg: a dict of the tap_flow, the mac of the port of
+                             the tap-flow, taas_id which is the VLAN Id
+                             reserved for mirroring for the tap-service
+                             associated with this tap-flow, the neutron port
+                             of the tap-flow, and the port of the
+                             tap-service:
+                             {tap_flow: {}, port_mac: '', taas_id: VID,
+                             port: {}, tap_service_port: {}}
+        """
+        taas_id = tap_flow_msg['taas_id']
+        port = tap_flow_msg['port']
+        direction = tap_flow_msg['tap_flow']['direction']
 
         # Get OVS port id for tap flow port
         ovs_port = self.int_br.get_vif_port_by_id(port['id'])
@@ -327,7 +358,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                  (str(taas_id), str(patch_int_tap_id)))
 
         if direction == 'IN' or direction == 'BOTH':
-            port_mac = tap_flow['port_mac']
+            port_mac = tap_flow_msg['port_mac']
 
             #
             # Note: The ingress side flow (for unicast traffic) should
@@ -382,9 +413,23 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
 
         return
 
-    def delete_tap_flow(self, tap_flow):
-        port = tap_flow['port']
-        direction = tap_flow['tap_flow']['direction']
+    @log_helpers.log_method_call
+    def delete_tap_flow(self, tap_flow_msg):
+        """Delete a tap flow
+
+        :param tap_flow_msg: a dict of the tap_flow, the mac of the port of
+                             the tap-flow, taas_id which is the VLAN Id
+                             reserved for mirroring for the tap-service
+                             associated with this tap-flow, the neutron port
+                             of the tap-flow, the port of the
+                             tap-service, the list of source VLAN IDs, and
+                             VLAN filter list.
+                             {tap_flow: {}, port_mac: '', taas_id: VID,
+                             port: {}, tap_service_port: {},
+                             source_vlans_list: [], vlan_filter_list: []}
+        """
+        port = tap_flow_msg['port']
+        direction = tap_flow_msg['tap_flow']['direction']
 
         # Get OVS port id for tap flow port
         ovs_port = self.int_br.get_vif_port_by_id(port['id'])
@@ -396,7 +441,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                      in_port=ovs_port_id)
 
         if direction == 'IN' or direction == 'BOTH':
-            port_mac = tap_flow['port_mac']
+            port_mac = tap_flow_msg['port_mac']
 
             #
             # The VLAN id related checks have been temporarily disabled.
