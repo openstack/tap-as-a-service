@@ -10,3 +10,7 @@
     gate:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service
+    periodic-weekly:
+      jobs:
+        - openstack-tox-py39
+        - neutron-tempest-plugin-tap-as-a-service
