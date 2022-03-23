@@ -429,11 +429,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                  actions=flow_action)
 
     def _create_tunnel_flood_flow_action(self):
-
-        args = ["ovs-vsctl", "list-ports", "br-tun"]
-        res = utils.execute(args, run_as_root=True, privsep_exec=True)
-
-        port_name_list = res.splitlines()
+        port_name_list = self.tun_br.get_port_name_list()
 
         flow_action = ("move:NXM_OF_VLAN_TCI[0..11]->NXM_NX_TUN_ID[0..11],"
                        "mod_vlan_vid:1")
