@@ -118,7 +118,10 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
                 'msg_name': 'tap_flow',
                 'set_status_func_name': 'set_tap_flow_status',
                 'fail_status': constants.PENDING_DELETE,
-                'succ_status': constants.INACTIVE}
+                'succ_status': constants.INACTIVE},
+            'periodic_tasks': {
+                'msg_name': 'periodic_tasks',
+            }
         }
         self.portbind_drivers_map = {portbindings.VNIC_DIRECT: 'sriov',
                                      portbindings.VNIC_NORMAL: 'ovs'}
@@ -132,7 +135,9 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         LOG.debug("Invoking Driver for %(func_name)s from agent",
                   {'func_name': func_name})
 
-        status_msg = {'id': args[self.func_dict[func_name]['msg_name']]['id']}
+        if func_name != 'periodic_tasks':
+            func_dict = self.func_dict[func_name]
+            status_msg = {'id': args[func_dict['msg_name']]['id']}
 
         try:
             self.taas_driver.__getattribute__(func_name)(args)
@@ -146,11 +151,12 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
                     self.conf.host)
             return
 
-        self.taas_plugin_rpc.__getattribute__(
-            self.func_dict[func_name]['set_status_func_name'])(
-                status_msg,
-                self.func_dict[func_name]['succ_status'],
-                self.conf.host)
+        if func_name != 'periodic_tasks':
+            self.taas_plugin_rpc.__getattribute__(
+                self.func_dict[func_name]['set_status_func_name'])(
+                    status_msg,
+                    self.func_dict[func_name]['succ_status'],
+                    self.conf.host)
 
     def create_tap_service(self, context, tap_service, host):
         """Handle Rpc from plugin to create a tap_service."""
