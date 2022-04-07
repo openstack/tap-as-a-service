@@ -1,6 +1,5 @@
 - project:
     templates:
-      - openstack-lower-constraints-jobs
       - openstack-cover-jobs-neutron
       - build-openstack-docs-pti
       - check-requirements
@@ -24,13 +23,13 @@
       devstack_services:
         taas: true
       devstack_plugins:
-        tap-as-a-service: https://opendev.org/x/tap-as-a-service
+        tap-as-a-service: https://opendev.org/openstack/tap-as-a-service
       tempest_plugins:
         - tap-as-a-service-tempest-plugin
       tempest_test_regex: (^tempest|^neutron_taas_tempest_plugin)
     required-projects:
       - openstack/devstack-gate
-      - x/tap-as-a-service
+      - openstack/tap-as-a-service
       - x/tap-as-a-service-tempest-plugin
       - openstack/tempest
     irrelevant-files:
