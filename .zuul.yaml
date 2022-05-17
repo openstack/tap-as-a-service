@@ -6,10 +6,17 @@
       - openstack-python3-zed-jobs-neutron
     check:
       jobs:
-        - neutron-tempest-plugin-tap-as-a-service
-    gate:
-      jobs:
-        - neutron-tempest-plugin-tap-as-a-service
+        # TODO(lajoskatona): make the job non-voting till
+        # https://review.opendev.org/c/openstack/neutron-tempest-plugin/+/842113
+        # is not merged
+        - neutron-tempest-plugin-tap-as-a-service:
+            voting: false
+    # TODO(lajoskatona): remove job from gate till
+    # https://review.opendev.org/c/openstack/neutron-tempest-plugin/+/842113
+    # is not merged
+    # gate:
+    #   jobs:
+        # - neutron-tempest-plugin-tap-as-a-service
     periodic-weekly:
       jobs:
         - openstack-tox-py39

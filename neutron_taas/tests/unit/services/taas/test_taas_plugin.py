@@ -87,7 +87,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         req = {
             'tap_service': self._tap_service,
         }
-        with mock.patch.object(self._plugin, '_get_port_details',
+        with mock.patch.object(self._plugin, 'get_port_details',
                                return_value=self._port_details):
             self._plugin.create_tap_service(self._context, req)
         self._tap_service['id'] = mock.ANY
@@ -119,7 +119,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         req = {
             'tap_flow': self._tap_flow,
         }
-        with mock.patch.object(self._plugin, '_get_port_details',
+        with mock.patch.object(self._plugin, 'get_port_details',
                                return_value=self._port_details):
             self._plugin.create_tap_flow(self._context, req)
         self._tap_flow['id'] = mock.ANY
@@ -198,7 +198,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
             req = {
                 'tap_service': self._tap_service,
             }
-            with mock.patch.object(self._plugin, '_get_port_details',
+            with mock.patch.object(self._plugin, 'get_port_details',
                                    return_value=self._port_details):
                 self._plugin.create_tap_service(self._context, req)
 
@@ -269,7 +269,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                 req = {
                     'tap_flow': self._tap_flow,
                 }
-                with mock.patch.object(self._plugin, '_get_port_details',
+                with mock.patch.object(self._plugin, 'get_port_details',
                                        return_value=self._port_details):
                     self._plugin.create_tap_flow(self._context, req)
 

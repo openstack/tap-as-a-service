@@ -17,6 +17,7 @@
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib import rpc as n_rpc
 
@@ -55,7 +56,7 @@ class TaasCallbacks(object):
         for ts in active_tss:
             # If tap-service port is bound to a different host than the one
             # which sent this RPC, then continue.
-            ts_port = self.plugin._get_port_details(
+            ts_port = self.plugin.get_port_details(
                 context, ts['port_id'])
             if ts_port['binding:host_id'] != host:
                 continue
@@ -90,6 +91,7 @@ class TaasCallbacks(object):
                         super(TaasPlugin, self.plugin).delete_tap_flow(
                             context, tf['id'])
 
+    @db_api.CONTEXT_WRITER
     def set_tap_service_status(self, context, msg, status, host=None):
         """Handle Rpc from Agent to set the status of Tap resources."""
         LOG.info("In RPC Call to set tap service status: Host=%s, "
@@ -98,25 +100,24 @@ class TaasCallbacks(object):
         # Clear the resource from DB once agent indicates successful deletion
         # by mech driver.
         if status == constants.INACTIVE:
-            with context.session.begin(subtransactions=True):
-                ts = self.plugin.get_tap_service(context, msg['id'])
-                driver_context = sd_context.TapServiceContext(self.plugin,
-                                                              context,
-                                                              ts)
-                super(TaasPlugin, self.plugin).delete_tap_service(context,
-                                                                  msg['id'])
-                self.plugin.driver.delete_tap_service_postcommit(
-                    driver_context)
+            ts = self.plugin.get_tap_service(context, msg['id'])
+            driver_context = sd_context.TapServiceContext(self.plugin,
+                                                          context,
+                                                          ts)
+            super(TaasPlugin, self.plugin).delete_tap_service(context,
+                                                              msg['id'])
+            self.plugin.driver.delete_tap_service_postcommit(
+                driver_context)
             return
 
-        with context.session.begin(subtransactions=True):
-            ts = self.plugin.get_tap_service(context, msg['id'])
-            ts['status'] = status
-            super(TaasPlugin, self.plugin).update_tap_service(
-                context,
-                msg['id'],
-                {'tap_service': ts})
+        ts = self.plugin.get_tap_service(context, msg['id'])
+        ts['status'] = status
+        super(TaasPlugin, self.plugin).update_tap_service(
+            context,
+            msg['id'],
+            {'tap_service': ts})
 
+    @db_api.CONTEXT_WRITER
     def set_tap_flow_status(self, context, msg, status, host=None):
         """Handle Rpc from Agent to set the status of Tap resources."""
         LOG.info("In RPC Call to set tap flow status: Host=%s, "
@@ -125,22 +126,20 @@ class TaasCallbacks(object):
         # Clear the resource from DB once agent indicates successful deletion
         # by mech driver.
         if status == constants.INACTIVE:
-            with context.session.begin(subtransactions=True):
-                tf = self.plugin.get_tap_flow(context, msg['id'])
-                driver_context = sd_context.TapFlowContext(self.plugin,
-                                                           context,
-                                                           tf)
-                super(TaasPlugin, self.plugin).delete_tap_flow(context,
-                                                               msg['id'])
-                self.plugin.driver.delete_tap_flow_postcommit(driver_context)
+            tf = self.plugin.get_tap_flow(context, msg['id'])
+            driver_context = sd_context.TapFlowContext(self.plugin,
+                                                       context,
+                                                       tf)
+            super(TaasPlugin, self.plugin).delete_tap_flow(context,
+                                                           msg['id'])
+            self.plugin.driver.delete_tap_flow_postcommit(driver_context)
             return
 
-        with context.session.begin(subtransactions=True):
-            tf = self.plugin.get_tap_flow(context, msg['id'])
-            tf['status'] = status
-            super(TaasPlugin, self.plugin).update_tap_flow(context,
-                                                           msg['id'],
-                                                           {'tap_flow': tf})
+        tf = self.plugin.get_tap_flow(context, msg['id'])
+        tf['status'] = status
+        super(TaasPlugin, self.plugin).update_tap_flow(context,
+                                                       msg['id'],
+                                                       {'tap_flow': tf})
 
 
 class TaasRpcDriver(service_drivers.TaasBaseDriver):
@@ -187,8 +186,8 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         ts = context.tap_service
         tap_id_association = context.tap_id_association
         taas_vlan_id = tap_id_association['taas_id']
-        port = self.service_plugin._get_port_details(context._plugin_context,
-                                                     ts['port_id'])
+        port = self.service_plugin.get_port_details(context._plugin_context,
+                                                    ts['port_id'])
         host = port['binding:host_id']
 
         rpc_msg = {'tap_service': ts,
@@ -210,7 +209,7 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         taas_vlan_id = tap_id_association['taas_id']
 
         try:
-            port = self.service_plugin._get_port_details(
+            port = self.service_plugin.get_port_details(
                 context._plugin_context,
                 ts['port_id'])
             host = port['binding:host_id']
@@ -238,14 +237,14 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         tf = context.tap_flow
         taas_id = self._get_taas_id(context._plugin_context, tf)
         # Extract the host where the source port is located
-        port = self.service_plugin._get_port_details(context._plugin_context,
-                                                     tf['source_port'])
+        port = self.service_plugin.get_port_details(context._plugin_context,
+                                                    tf['source_port'])
         host = port['binding:host_id']
         port_mac = port['mac_address']
         # Extract the tap-service port
         ts = self.service_plugin.get_tap_service(context._plugin_context,
                                                  tf['tap_service_id'])
-        ts_port = self.service_plugin._get_port_details(
+        ts_port = self.service_plugin.get_port_details(
             context._plugin_context, ts['port_id'])
 
         # Send RPC message to both the source port host and
@@ -264,14 +263,14 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         tf = context.tap_flow
         taas_id = self._get_taas_id(context._plugin_context, tf)
         # Extract the host where the source port is located
-        port = self.service_plugin._get_port_details(context._plugin_context,
-                                                     tf['source_port'])
+        port = self.service_plugin.get_port_details(context._plugin_context,
+                                                    tf['source_port'])
         host = port['binding:host_id']
         port_mac = port['mac_address']
         # Extract the tap-service port
         ts = self.service_plugin.get_tap_service(context._plugin_context,
                                                  tf['tap_service_id'])
-        ts_port = self.service_plugin._get_port_details(
+        ts_port = self.service_plugin.get_port_details(
             context._plugin_context, ts['port_id'])
 
         src_vlans_list = []
@@ -286,7 +285,7 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
                 fields=['source_port', 'vlan_filter'])
 
             for tap_flow in active_tfs:
-                source_port = self.service_plugin._get_port_details(
+                source_port = self.service_plugin.get_port_details(
                     context._plugin_context, tap_flow['source_port'])
 
                 LOG.debug("taas: active TF's source_port %(source_port)s",

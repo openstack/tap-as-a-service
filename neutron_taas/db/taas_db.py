@@ -20,6 +20,7 @@ from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
 from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
@@ -86,12 +87,16 @@ class Taas_db_Mixin(taas.TaasPluginBase):
     def _core_plugin(self):
         return directory.get_plugin()
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _get_tap_service(self, context, id):
         try:
             return model_query.get_by_id(context, TapService, id)
         except exc.NoResultFound:
             raise taas.TapServiceNotFound(tap_id=id)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _get_tap_id_association(self, context, tap_service_id):
         try:
             query = model_query.query_with_hooks(context, TapIdAssociation)
@@ -100,10 +105,11 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         except exc.NoResultFound:
             raise taas.TapServiceNotFound(tap_id=tap_service_id)
 
+    @db_api.CONTEXT_READER
     def _get_tap_flow(self, context, id):
         try:
             return model_query.get_by_id(context, TapFlow, id)
-        except Exception:
+        except exc.NoResultFound:
             raise taas.TapFlowNotFound(flow_id=id)
 
     def _make_tap_service_dict(self, tap_service, fields=None):
@@ -135,20 +141,21 @@ class Taas_db_Mixin(taas.TaasPluginBase):
 
         return db_utils.resource_fields(res, fields)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def create_tap_service(self, context, tap_service):
         LOG.debug("create_tap_service() called")
         t_s = tap_service['tap_service']
         tenant_id = t_s['tenant_id']
-        with context.session.begin(subtransactions=True):
-            tap_service_db = TapService(
-                id=uuidutils.generate_uuid(),
-                tenant_id=tenant_id,
-                name=t_s['name'],
-                description=t_s['description'],
-                port_id=t_s['port_id'],
-                status=constants.DOWN,
-            )
-            context.session.add(tap_service_db)
+        tap_service_db = TapService(
+            id=uuidutils.generate_uuid(),
+            tenant_id=tenant_id,
+            name=t_s['name'],
+            description=t_s['description'],
+            port_id=t_s['port_id'],
+            status=constants.DOWN,
+        )
+        context.session.add(tap_service_db)
 
         return self._make_tap_service_dict(tap_service_db)
 
@@ -183,41 +190,45 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         # not found
         raise taas.TapServiceLimitReached()
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def create_tap_id_association(self, context, tap_service_id):
         LOG.debug("create_tap_id_association() called")
         # create the TapIdAssociation object
-        with context.session.begin(subtransactions=True):
-            # allocate Taas id.
-            # if conflict happened, it will raise db.DBDuplicateEntry.
-            # this will be retry request again in neutron controller framework.
-            # so we just make sure TapIdAssociation field taas_id is unique
-            tap_id_association_db = self._allocate_taas_id_with_tap_service_id(
-                context, tap_service_id)
+        # allocate Taas id.
+        # if conflict happened, it will raise db.DBDuplicateEntry.
+        # this will be retry request again in neutron controller framework.
+        # so we just make sure TapIdAssociation field taas_id is unique
+        tap_id_association_db = self._allocate_taas_id_with_tap_service_id(
+            context, tap_service_id)
 
         return self._make_tap_id_association_dict(tap_id_association_db)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def create_tap_flow(self, context, tap_flow):
         LOG.debug("create_tap_flow() called")
         t_f = tap_flow['tap_flow']
         tenant_id = t_f['tenant_id']
         # TODO(Vinay): Check for the tenant_id validation
         # TODO(Vinay): Check for the source port validation
-        with context.session.begin(subtransactions=True):
-            tap_flow_db = TapFlow(
-                id=uuidutils.generate_uuid(),
-                tenant_id=tenant_id,
-                name=t_f['name'],
-                description=t_f['description'],
-                tap_service_id=t_f['tap_service_id'],
-                source_port=t_f['source_port'],
-                direction=t_f['direction'],
-                status=constants.DOWN,
-                vlan_filter=t_f['vlan_filter'],
-            )
-            context.session.add(tap_flow_db)
+        tap_flow_db = TapFlow(
+            id=uuidutils.generate_uuid(),
+            tenant_id=tenant_id,
+            name=t_f['name'],
+            description=t_f['description'],
+            tap_service_id=t_f['tap_service_id'],
+            source_port=t_f['source_port'],
+            direction=t_f['direction'],
+            status=constants.DOWN,
+            vlan_filter=t_f['vlan_filter'],
+        )
+        context.session.add(tap_flow_db)
 
         return self._make_tap_flow_dict(tap_flow_db)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def delete_tap_service(self, context, id):
         LOG.debug("delete_tap_service() called")
 
@@ -226,9 +237,9 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         if not count:
             raise taas.TapServiceNotFound(tap_id=id)
 
+    @db_api.CONTEXT_WRITER
     def delete_tap_flow(self, context, id):
         LOG.debug("delete_tap_flow() called")
-
         count = context.session.query(TapFlow).filter_by(id=id).delete()
 
         if not count:
@@ -246,12 +257,15 @@ class Taas_db_Mixin(taas.TaasPluginBase):
         t_a = self._get_tap_id_association(context, tap_service_id)
         return self._make_tap_id_association_dict(t_a)
 
+    @db_api.CONTEXT_READER
     def get_tap_flow(self, context, id, fields=None):
         LOG.debug("get_tap_flow() called")
 
         t_f = self._get_tap_flow(context, id)
         return self._make_tap_flow_dict(t_f, fields)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_tap_services(self, context, filters=None, fields=None,
                          sorts=None, limit=None, marker=None,
                          page_reverse=False):
@@ -260,6 +274,8 @@ class Taas_db_Mixin(taas.TaasPluginBase):
                                           self._make_tap_service_dict,
                                           filters=filters, fields=fields)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_tap_flows(self, context, filters=None, fields=None,
                       sorts=None, limit=None, marker=None,
                       page_reverse=False):
@@ -268,24 +284,27 @@ class Taas_db_Mixin(taas.TaasPluginBase):
                                           self._make_tap_flow_dict,
                                           filters=filters, fields=fields)
 
-    def _get_port_details(self, context, port_id):
-        with context.session.begin(subtransactions=True):
-            port = self._core_plugin().get_port(context, port_id)
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
+    def get_port_details(self, context, port_id):
+        port = self._core_plugin().get_port(context, port_id)
 
         return port
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def update_tap_service(self, context, id, tap_service):
         LOG.debug("update_tap_service() called")
         t_s = tap_service['tap_service']
-        with context.session.begin(subtransactions=True):
-            tap_service_db = self._get_tap_service(context, id)
-            tap_service_db.update(t_s)
+        tap_service_db = self._get_tap_service(context, id)
+        tap_service_db.update(t_s)
         return self._make_tap_service_dict(tap_service_db)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
     def update_tap_flow(self, context, id, tap_flow):
         LOG.debug("update_tap_flow() called")
         t_f = tap_flow['tap_flow']
-        with context.session.begin(subtransactions=True):
-            tap_flow_db = self._get_tap_flow(context, id)
-            tap_flow_db.update(t_f)
+        tap_flow_db = self._get_tap_flow(context, id)
+        tap_flow_db.update(t_f)
         return self._make_tap_flow_dict(tap_flow_db)
