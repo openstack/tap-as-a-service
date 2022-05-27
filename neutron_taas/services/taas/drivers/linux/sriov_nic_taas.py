@@ -23,6 +23,7 @@ from neutron_taas.services.taas.drivers.linux import sriov_nic_utils \
     as sriov_utils
 
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
 import threading
@@ -48,8 +49,17 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
     def consume_api(self, agent_api):
         self.agent_api = agent_api
 
-    def create_tap_service(self, tap_service):
-        ts_port = tap_service['port']
+    @log_helpers.log_method_call
+    def create_tap_service(self, tap_service_msg):
+        """Create a tap service
+
+        :param tap_service_msg: a dict of the tap_service,
+                                taas_id which is the VLAN Id reserved for
+                                mirroring for this tap-service and the neutron
+                                port of the tap-service:
+                                {tap_service: {}, taas_id: VID, port: {}}
+        """
+        ts_port = tap_service_msg['port']
 
         LOG.debug("SRIOV Driver: Inside create_tap_service: "
                   "Port-id: %(port_id)s",
@@ -70,8 +80,17 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
 
         return
 
-    def delete_tap_service(self, tap_service):
-        ts_port = tap_service['port']
+    @log_helpers.log_method_call
+    def delete_tap_service(self, tap_service_msg):
+        """Delete a tap service
+
+        :param tap_service_msg: a dict of the tap_service,
+                                taas_id which is the VLAN Id reserved for
+                                mirroring for this tap-service and the neutron
+                                port of the tap-service:
+                                {tap_service: {}, taas_id: VID, port: {}}
+        """
+        ts_port = tap_service_msg['port']
 
         LOG.debug("SRIOV Driver: Inside delete_tap_service: "
                   "Port-id: %(port_id)s",
@@ -92,11 +111,23 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
 
         return
 
-    def create_tap_flow(self, tap_flow):
-        source_port = tap_flow['port']
-        ts_port = tap_flow['tap_service_port']
-        direction = tap_flow['tap_flow']['direction']
-        vlan_filter = tap_flow['tap_flow']['vlan_filter']
+    @log_helpers.log_method_call
+    def create_tap_flow(self, tap_flow_msg):
+        """Create a tap flow
+
+        :param tap_flow_msg: a dict of the tap_flow, the mac of the port of
+                             the tap-flow, taas_id which is the VLAN Id
+                             reserved for mirroring for the tap-service
+                             associated with this tap-flow, the neutron port
+                             of the tap-flow, and the port of the
+                             tap-service:
+                             {tap_flow: {}, port_mac: '', taas_id: '',
+                             port: {}, tap_service_port: {}}
+        """
+        source_port = tap_flow_msg['port']
+        ts_port = tap_flow_msg['tap_service_port']
+        direction = tap_flow_msg['tap_flow']['direction']
+        vlan_filter = tap_flow_msg['tap_flow']['vlan_filter']
         vf_to_vf_all_vlans = False
 
         LOG.debug("SRIOV Driver: Inside create_tap_flow: "
@@ -218,11 +249,25 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
                             direction=direction)
         return
 
-    def delete_tap_flow(self, tap_flow):
-        source_port = tap_flow['port']
-        ts_port = tap_flow['tap_service_port']
-        vlan_filter = tap_flow['tap_flow']['vlan_filter']
-        direction = tap_flow['tap_flow']['direction']
+    @log_helpers.log_method_call
+    def delete_tap_flow(self, tap_flow_msg):
+        """Delete a tap flow
+
+        :param tap_flow_msg: a dict of the tap_flow, the mac of the port of
+                             the tap-flow, taas_id which is the VLAN Id
+                             reserved for mirroring for the tap-service
+                             associated with this tap-flow, the neutron port
+                             of the tap-flow, the port of the
+                             tap-service, the list of source VLAN IDs, and
+                             VLAN filter list.
+                             {tap_flow: {}, port_mac: '', taas_id: '',
+                             port: {}, tap_service_port: {},
+                             source_vlans_list: [], vlan_filter_list: []}
+        """
+        source_port = tap_flow_msg['port']
+        ts_port = tap_flow_msg['tap_service_port']
+        vlan_filter = tap_flow_msg['tap_flow']['vlan_filter']
+        direction = tap_flow_msg['tap_flow']['direction']
 
         LOG.debug("SRIOV Driver: Inside delete_tap_flow: "
                   "SRC Port-id: %(src_port_id)s, "
@@ -286,14 +331,14 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
 
         # Fetch common VLAN tags
         src_vlans_list = []
-        for src_vlans_str in tap_flow['source_vlans_list']:
+        for src_vlans_str in tap_flow_msg['source_vlans_list']:
             src_vlans_list.extend(common_utils.get_list_from_ranges_str(
                 src_vlans_str))
 
         src_vlans_list = sorted(set(src_vlans_list))
 
         vlan_filter_list = []
-        for vlan_filter_str in tap_flow['vlan_filter_list']:
+        for vlan_filter_str in tap_flow_msg['vlan_filter_list']:
             vlan_filter_list.extend(common_utils.get_list_from_ranges_str(
                 vlan_filter_str))
 

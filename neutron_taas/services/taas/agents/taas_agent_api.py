@@ -43,11 +43,11 @@ class TaasAgentRpcCallbackMixin(object):
         """
         self.agent_api = agent_api
 
-    def create_tap_service(self, context, tap_service, host):
+    def create_tap_service(self, context, tap_service_msg, host):
         """Handle RPC cast from plugin to create a tap service."""
         pass
 
-    def delete_tap_service(self, context, tap_service, host):
+    def delete_tap_service(self, context, tap_service_msg, host):
         """Handle RPC cast from plugin to delete a tap service."""
         pass
 

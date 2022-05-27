@@ -50,19 +50,19 @@ class TaasAgentDriver(object):
         """
 
     @abc.abstractmethod
-    def create_tap_service(self, tap_service):
+    def create_tap_service(self, tap_service_msg):
         """Create a Tap Service request in driver."""
 
     @abc.abstractmethod
-    def create_tap_flow(self, tap_flow):
+    def create_tap_flow(self, tap_flow_msg):
         """Create a tap flow request in driver."""
 
     @abc.abstractmethod
-    def delete_tap_service(self, tap_service):
+    def delete_tap_service(self, tap_service_msg):
         """delete a Tap Service request in driver."""
 
     @abc.abstractmethod
-    def delete_tap_flow(self, tap_flow):
+    def delete_tap_flow(self, tap_flow_msg):
         """Delete a tap flow request in driver."""
 
 
