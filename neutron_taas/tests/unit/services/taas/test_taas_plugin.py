@@ -41,9 +41,9 @@ class DummyError(Exception):
 class TestTaasPlugin(testlib_api.SqlTestCase):
     def setUp(self):
         super(TestTaasPlugin, self).setUp()
-        mock.patch.object(n_rpc, 'Connection', auto_spec=True).start()
+        mock.patch.object(n_rpc, 'Connection', autospec=True).start()
         mock.patch.object(taas_agent_api,
-                          'TaasAgentApi', auto_spec=True).start()
+                          'TaasAgentApi', autospec=True).start()
         self.driver = mock.MagicMock()
         mock.patch('neutron.services.service_base.load_drivers',
                    return_value=({'dummy_provider': self.driver},
