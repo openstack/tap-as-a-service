@@ -14,7 +14,6 @@
 # limitations under the License.
 
 import abc
-import six
 
 from neutron_lib.agent import l2_extension
 
@@ -35,8 +34,7 @@ OPTS = [
 cfg.CONF.register_opts(OPTS)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TaasAgentDriver(object):
+class TaasAgentDriver(object, metaclass=abc.ABCMeta):
     """Defines stable abstract interface for TaaS Agent Driver."""
 
     @abc.abstractmethod

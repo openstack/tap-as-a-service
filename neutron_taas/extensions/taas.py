@@ -23,8 +23,6 @@ from neutron.api.v2 import resource_helper
 
 from neutron_taas.common import config
 
-import six
-
 
 config.register()
 
@@ -53,8 +51,7 @@ class Taas(extensions.APIExtensionDescriptor):
         return TaasPluginBase
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TaasPluginBase(service_base.ServicePluginBase):
+class TaasPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
 
     def get_plugin_description(self):
         return taas_api_def.DESCRIPTION
