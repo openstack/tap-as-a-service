@@ -19,6 +19,7 @@ from webob import exc
 from oslo_utils import uuidutils
 
 from neutron.api import extensions
+from neutron.conf import common as conf_common
 from neutron.tests.unit.api.v2 import test_base as test_api_v2
 from neutron.tests.unit.extensions import base as test_extensions_base
 from neutron_lib.api.definitions import taas as taas_api
@@ -35,6 +36,7 @@ TAP_FLOW_PATH = 'taas/tap_flows'
 class TaasExtensionTestCase(test_extensions_base.ExtensionTestCase):
 
     def setUp(self):
+        conf_common.register_core_common_config_opts()
         extensions.append_api_extensions_path(taas_extensions.__path__)
         super(TaasExtensionTestCase, self).setUp()
         plural_mappings = {'tap_service': 'tap_services',
