@@ -3,7 +3,7 @@
       - openstack-cover-jobs-neutron
       - build-openstack-docs-pti
       - check-requirements
-      - openstack-python3-zed-jobs-neutron
+      - openstack-python3-jobs-neutron
     check:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service
