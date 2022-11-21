@@ -59,7 +59,7 @@ class CreateTapService(command.ShowOne):
     _description = _("Create a tap service")
 
     def get_parser(self, prog_name):
-        parser = super(CreateTapService, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         nc_osc_utils.add_project_owner_option_to_parser(parser)
         _add_updatable_args(parser)
         parser.add_argument(
@@ -99,7 +99,7 @@ class ListTapService(command.Lister):
     _description = _("List tap services that belong to a given tenant")
 
     def get_parser(self, prog_name):
-        parser = super(ListTapService, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         nc_osc_utils.add_project_owner_option_to_parser(parser)
 
         return parser
@@ -126,7 +126,7 @@ class ShowTapService(command.ShowOne):
     _description = _("Show information of a given tap service")
 
     def get_parser(self, prog_name):
-        parser = super(ShowTapService, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_SERVICE,
             metavar="<%s>" % TAP_SERVICE,
@@ -147,7 +147,7 @@ class DeleteTapService(command.Command):
     _description = _("Delete a tap service")
 
     def get_parser(self, prog_name):
-        parser = super(DeleteTapService, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_SERVICE,
             metavar="<%s>" % TAP_SERVICE,
@@ -179,7 +179,7 @@ class UpdateTapService(command.ShowOne):
     _description = _("Update a tap service.")
 
     def get_parser(self, prog_name):
-        parser = super(UpdateTapService, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_SERVICE,
             metavar="<%s>" % TAP_SERVICE,

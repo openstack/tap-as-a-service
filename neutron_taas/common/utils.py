@@ -25,7 +25,7 @@ def get_list_from_ranges_str(ranges_str):
     return sum(((list(range(*[int(range_start) + range_index
                               for range_index, range_start in
                               enumerate(range_item.split('-'))]))
-                if '-' in range_item else [int(range_item)])
+                 if '-' in range_item else [int(range_item)])
                 for range_item in ranges_str.split(',')), [])
 
 

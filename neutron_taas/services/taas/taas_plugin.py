@@ -58,8 +58,6 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         self._load_drivers()
         self.driver = self._get_driver_for_provider(self.default_provider)
 
-        return
-
     def _load_drivers(self):
         """Loads plugin-drivers specified in configuration."""
         self.drivers, self.default_provider = service_base.load_drivers(
@@ -95,8 +93,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             LOG.debug("Host could not be found, Port Binding disbaled!")
 
         # Create tap service in the db model
-        ts = super(TaasPlugin, self).create_tap_service(context,
-                                                        tap_service)
+        ts = super().create_tap_service(context, tap_service)
         driver_context = sd_context.TapServiceContext(self, context, ts)
         self.driver.create_tap_service_precommit(driver_context)
 
@@ -106,7 +103,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             with excutils.save_and_reraise_exception():
                 LOG.error("Failed to create tap service on driver,"
                           "deleting tap_service %s", ts['id'])
-                super(TaasPlugin, self).delete_tap_service(context, ts['id'])
+                super().delete_tap_service(context, ts['id'])
 
         return ts
 
@@ -127,11 +124,11 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         driver_context = sd_context.TapServiceContext(self, context, ts)
         if ts['status'] == constants.ACTIVE:
             ts['status'] = constants.PENDING_DELETE
-            super(TaasPlugin, self).update_tap_service(
+            super().update_tap_service(
                 context, id, {'tap_service': ts})
             method = self.driver.delete_tap_service_precommit
         else:
-            super(TaasPlugin, self).delete_tap_service(context, id)
+            super().delete_tap_service(context, id)
             method = self.driver.delete_tap_service_postcommit
 
         try:
@@ -158,7 +155,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             raise taas_exc.TapServiceNotBelongToTenant()
 
         # create tap flow in the db model
-        tf = super(TaasPlugin, self).create_tap_flow(context, tap_flow)
+        tf = super().create_tap_flow(context, tap_flow)
         driver_context = sd_context.TapFlowContext(self, context, tf)
         self.driver.create_tap_flow_precommit(driver_context)
 
@@ -168,7 +165,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             with excutils.save_and_reraise_exception():
                 LOG.error("Failed to create tap flow on driver,"
                           "deleting tap_flow %s", tf['id'])
-                super(TaasPlugin, self).delete_tap_flow(context, tf['id'])
+                super().delete_tap_flow(context, tf['id'])
 
         return tf
 
@@ -180,11 +177,10 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         driver_context = sd_context.TapFlowContext(self, context, tf)
         if tf['status'] == constants.ACTIVE:
             tf['status'] = constants.PENDING_DELETE
-            super(TaasPlugin, self).update_tap_flow(context, id,
-                                                    {'tap_flow': tf})
+            super().update_tap_flow(context, id, {'tap_flow': tf})
             method = self.driver.delete_tap_flow_precommit
         else:
-            super(TaasPlugin, self).delete_tap_flow(context, id)
+            super().delete_tap_flow(context, id)
             method = self.driver.delete_tap_flow_postcommit
 
         try:

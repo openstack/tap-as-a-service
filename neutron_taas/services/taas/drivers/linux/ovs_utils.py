@@ -31,8 +31,6 @@ class key_value_mgr(object):
         for i in range(nr_keys):
             self.key_list.append([])
 
-        return
-
     #
     # Returns specified key-value affilation, if it exists.
     #
@@ -62,8 +60,6 @@ class key_value_mgr(object):
 
         # Increment affiliation reference count
         aff['refcnt'] += 1
-
-        return
 
     #
     # Removes an affiliation of 'value' with 'key'
