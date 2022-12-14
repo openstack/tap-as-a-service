@@ -16,9 +16,6 @@ import copy
 
 from oslo_utils import uuidutils
 
-from neutron_taas.taas_client.osc import tap_flow as osc_tap_flow
-from neutron_taas.taas_client.osc import tap_service as osc_tap_service
-
 
 class FakeTapService(object):
 
@@ -48,7 +45,7 @@ class FakeTapService(object):
             tap_services.append(FakeTapService.create_tap_service(
                 attrs=attrs))
 
-        return {osc_tap_service.TAP_SERVICES: tap_services}
+        return tap_services
 
 
 class FakeTapFlow(object):
@@ -83,4 +80,4 @@ class FakeTapFlow(object):
                 attrs['id'] = 'fake_id%d' % i
             tap_flows.append(FakeTapFlow.create_tap_flow(attrs=attrs))
 
-        return {osc_tap_flow.TAP_FLOWS: tap_flows}
+        return tap_flows

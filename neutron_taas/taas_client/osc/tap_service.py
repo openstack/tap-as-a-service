@@ -14,24 +14,19 @@
 
 import logging
 
+from osc_lib.cli import identity as identity_utils
 from osc_lib.command import command
 from osc_lib import exceptions
 from osc_lib import utils as osc_utils
 from osc_lib.utils import columns as column_util
 
-from neutronclient._i18n import _
-from neutronclient.neutron import v2_0 as neutronv20
-from neutronclient.osc import utils as nc_osc_utils
+from neutron_taas._i18n import _
 
 
 LOG = logging.getLogger(__name__)
 
 TAP_SERVICE = 'tap_service'
 TAP_SERVICES = '%ss' % TAP_SERVICE
-
-path = 'taas'
-object_path = '/%s/' % path
-resource_path = '/%s/%%s/%%s' % path
 
 _attr_map = (
     ('id', 'ID', column_util.LIST_BOTH),
@@ -52,7 +47,20 @@ def _add_updatable_args(parser):
 
 
 def _updatable_args2body(parsed_args, body):
-    neutronv20.update_dict(parsed_args, body, ['name', 'description'])
+    for attribute in ['name', 'description']:
+        if (hasattr(parsed_args, attribute) and
+                getattr(parsed_args, attribute) is not None):
+            body[attribute] = getattr(parsed_args, attribute)
+
+
+def _get_columns(item):
+    column_map = {}
+    hidden_columns = ['location', 'tenant_id']
+    return osc_utils.get_osc_show_columns_for_sdk_resource(
+        item,
+        column_map,
+        hidden_columns
+    )
 
 
 class CreateTapService(command.ShowOne):
@@ -60,7 +68,7 @@ class CreateTapService(command.ShowOne):
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        nc_osc_utils.add_project_owner_option_to_parser(parser)
+        identity_utils.add_project_owner_option_to_parser(parser)
         _add_updatable_args(parser)
         parser.add_argument(
             '--port',
@@ -71,26 +79,24 @@ class CreateTapService(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         attrs = {}
         if parsed_args.name is not None:
             attrs['name'] = str(parsed_args.name)
         if parsed_args.description is not None:
             attrs['description'] = str(parsed_args.description)
         if parsed_args.port_id is not None:
-            port_id = client.find_resource('port', parsed_args.port_id)['id']
+            port_id = client.find_port(parsed_args.port_id)['id']
             attrs['port_id'] = port_id
         if 'project' in parsed_args and parsed_args.project is not None:
-            project_id = nc_osc_utils.find_project(
+            project_id = identity_utils.find_project(
                 self.app.client_manager.identity,
                 parsed_args.project,
                 parsed_args.project_domain,
             ).id
             attrs['tenant_id'] = project_id
-        body = {TAP_SERVICE: attrs}
-        obj = client.post('%s%s' % (object_path, TAP_SERVICES),
-                          body=body)[TAP_SERVICE]
-        columns, display_columns = column_util.get_columns(obj, _attr_map)
+        obj = client.create_tap_service(**attrs)
+        display_columns, columns = _get_columns(obj)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data
 
@@ -100,22 +106,21 @@ class ListTapService(command.Lister):
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        nc_osc_utils.add_project_owner_option_to_parser(parser)
+        identity_utils.add_project_owner_option_to_parser(parser)
 
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         params = {}
         if parsed_args.project is not None:
-            project_id = nc_osc_utils.find_project(
+            project_id = identity_utils.find_project(
                 self.app.client_manager.identity,
                 parsed_args.project,
                 parsed_args.project_domain,
             ).id
             params['tenant_id'] = project_id
-        objs = client.list(TAP_SERVICES, '%s%s' % (object_path, TAP_SERVICES),
-                           retrieve_all=True, params=params)[TAP_SERVICES]
+        objs = client.tap_services(retrieve_all=True, params=params)
         headers, columns = column_util.get_column_definitions(
             _attr_map, long_listing=True)
         return (headers, (osc_utils.get_dict_properties(
@@ -135,10 +140,11 @@ class ShowTapService(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
-        id = client.find_resource(TAP_SERVICE, parsed_args.tap_service)['id']
-        obj = client.get(resource_path % (TAP_SERVICES, id))[TAP_SERVICE]
-        columns, display_columns = column_util.get_columns(obj, _attr_map)
+        client = self.app.client_manager.network
+        id = client.find_tap_service(parsed_args.tap_service,
+                                     ignore_missing=False).id
+        obj = client.get_tap_service(id)
+        display_columns, columns = _get_columns(obj)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data
 
@@ -157,12 +163,14 @@ class DeleteTapService(command.Command):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         fails = 0
         for id_or_name in parsed_args.tap_service:
             try:
-                id = client.find_resource(TAP_SERVICE, id_or_name)['id']
-                client.delete(resource_path % (TAP_SERVICES, id))
+                id = client.find_tap_service(id_or_name,
+                                             ignore_missing=False).id
+
+                client.delete_tap_service(id)
                 LOG.warning("Tap service %(id)s deleted", {'id': id})
             except Exception as e:
                 fails += 1
@@ -189,15 +197,15 @@ class UpdateTapService(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
-        id = client.find_resource(TAP_SERVICE, parsed_args.tap_service)['id']
+        client = self.app.client_manager.network
+        original_t_s = client.find_tap_service(parsed_args.tap_service,
+                                               ignore_missing=False).id
         attrs = {}
         if parsed_args.name is not None:
             attrs['name'] = str(parsed_args.name)
         if parsed_args.description is not None:
             attrs['description'] = str(parsed_args.description)
-        body = {TAP_SERVICE: attrs}
-        obj = client.put(resource_path % (TAP_SERVICES, id), body)[TAP_SERVICE]
-        columns, display_columns = column_util.get_columns(obj, _attr_map)
+        obj = client.update_tap_service(original_t_s, **attrs)
+        display_columns, columns = _get_columns(obj)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data

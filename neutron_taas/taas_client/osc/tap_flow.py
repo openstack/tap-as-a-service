@@ -15,23 +15,19 @@
 import logging
 
 from osc_lib.cli import format_columns
+from osc_lib.cli import identity as identity_utils
 from osc_lib.command import command
 from osc_lib import exceptions
 from osc_lib import utils as osc_utils
 from osc_lib.utils import columns as column_util
 
-from neutronclient._i18n import _
-from neutronclient.common import utils
-from neutronclient.osc import utils as nc_osc_utils
+from neutron_taas._i18n import _
+from neutron_taas.taas_client.osc import tap_service
 
 LOG = logging.getLogger(__name__)
 
 TAP_FLOW = 'tap_flow'
 TAP_FLOWS = '%ss' % TAP_FLOW
-
-path = 'taas'
-object_path = '/%s/' % path
-resource_path = '/%s/%%s/%%s' % path
 
 _attr_map = (
     ('id', 'ID', column_util.LIST_BOTH),
@@ -62,7 +58,7 @@ class CreateTapFlow(command.ShowOne):
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        nc_osc_utils.add_project_owner_option_to_parser(parser)
+        identity_utils.add_project_owner_option_to_parser(parser)
         _add_updatable_args(parser)
         parser.add_argument(
             '--port',
@@ -79,7 +75,7 @@ class CreateTapFlow(command.ShowOne):
             required=True,
             metavar="DIRECTION",
             choices=['IN', 'OUT', 'BOTH'],
-            type=utils.convert_to_uppercase,
+            type=lambda s: s.upper(),
             help=_('Direction of the Tap flow. Possible options are: '
                    'IN, OUT, BOTH'))
         parser.add_argument(
@@ -90,35 +86,32 @@ class CreateTapFlow(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         attrs = {}
         if parsed_args.name is not None:
             attrs['name'] = str(parsed_args.name)
         if parsed_args.description is not None:
             attrs['description'] = str(parsed_args.description)
         if parsed_args.port is not None:
-            source_port = client.find_resource('port',
-                                               parsed_args.port)['id']
+            source_port = client.find_port(parsed_args.port)['id']
             attrs['source_port'] = source_port
         if parsed_args.tap_service is not None:
-            tap_service_id = client.find_resource(
-                'tap_service', parsed_args.tap_service)['id']
+            tap_service_id = client.find_tap_service(
+                parsed_args.tap_service)['id']
             attrs['tap_service_id'] = tap_service_id
         if parsed_args.direction is not None:
             attrs['direction'] = parsed_args.direction
         if parsed_args.vlan_filter is not None:
             attrs['vlan_filter'] = parsed_args.vlan_filter
         if 'project' in parsed_args and parsed_args.project is not None:
-            project_id = nc_osc_utils.find_project(
+            project_id = identity_utils.find_project(
                 self.app.client_manager.identity,
                 parsed_args.project,
                 parsed_args.project_domain,
             ).id
             attrs['tenant_id'] = project_id
-        body = {TAP_FLOW: attrs}
-        obj = client.post('%s%s' % (object_path, TAP_FLOWS),
-                          body=body)[TAP_FLOW]
-        columns, display_columns = column_util.get_columns(obj, _attr_map)
+        obj = client.create_tap_flow(**attrs)
+        display_columns, columns = tap_service._get_columns(obj)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data
 
@@ -128,22 +121,21 @@ class ListTapFlow(command.Lister):
 
     def get_parser(self, prog_name):
         parser = super().get_parser(prog_name)
-        nc_osc_utils.add_project_owner_option_to_parser(parser)
+        identity_utils.add_project_owner_option_to_parser(parser)
 
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         params = {}
         if parsed_args.project is not None:
-            project_id = nc_osc_utils.find_project(
+            project_id = identity_utils.find_project(
                 self.app.client_manager.identity,
                 parsed_args.project,
                 parsed_args.project_domain,
             ).id
             params['tenant_id'] = project_id
-        objs = client.list(TAP_FLOWS, '%s%s' % (object_path, TAP_FLOWS),
-                           retrieve_all=True, params=params)[TAP_FLOWS]
+        objs = client.tap_flows(retrieve_all=True, params=params)
         headers, columns = column_util.get_column_definitions(
             _attr_map, long_listing=True)
         return (headers, (osc_utils.get_dict_properties(
@@ -163,10 +155,11 @@ class ShowTapFlow(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
-        id = client.find_resource(TAP_FLOW, parsed_args.tap_flow)['id']
-        obj = client.get(resource_path % (TAP_FLOWS, id))[TAP_FLOW]
-        columns, display_columns = column_util.get_columns(obj, _attr_map)
+        client = self.app.client_manager.network
+        id = client.find_tap_flow(parsed_args.tap_flow,
+                                  ignore_missing=False).id
+        obj = client.get_tap_flow(id)
+        display_columns, columns = tap_service._get_columns(obj)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data
 
@@ -185,12 +178,13 @@ class DeleteTapFlow(command.Command):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
+        client = self.app.client_manager.network
         fails = 0
         for id_or_name in parsed_args.tap_flow:
             try:
-                id = client.find_resource(TAP_FLOW, id_or_name)['id']
-                client.delete(resource_path % (TAP_FLOWS, id))
+                id = client.find_tap_flow(id_or_name,
+                                          ignore_missing=False).id
+                client.delete_tap_flow(id)
                 LOG.warning("Tap flow %(id)s deleted", {'id': id})
             except Exception as e:
                 fails += 1
@@ -199,7 +193,7 @@ class DeleteTapFlow(command.Command):
                           {'id_or_name': id_or_name, 'e': e})
         if fails > 0:
             msg = (_("Failed to delete %(fails)s of %(total)s tap flow.") %
-                   {'fails': fails, 'total': len(parsed_args.tap_service)})
+                   {'fails': fails, 'total': len(parsed_args.tap_flow)})
             raise exceptions.CommandError(msg)
 
 
@@ -217,15 +211,15 @@ class UpdateTapFlow(command.ShowOne):
         return parser
 
     def take_action(self, parsed_args):
-        client = self.app.client_manager.neutronclient
-        id = client.find_resource(TAP_FLOW, parsed_args.tap_flow)['id']
+        client = self.app.client_manager.network
+        original_t_f = client.find_tap_flow(parsed_args.tap_flow,
+                                            ignore_missing=False).id
         attrs = {}
         if parsed_args.name is not None:
             attrs['name'] = str(parsed_args.name)
         if parsed_args.description is not None:
             attrs['description'] = str(parsed_args.description)
-        body = {TAP_FLOW: attrs}
-        obj = client.put(resource_path % (TAP_FLOWS, id), body)[TAP_FLOW]
+        obj = client.update_tap_flow(original_t_f, **attrs)
         columns, display_columns = column_util.get_columns(obj, _attr_map)
         data = osc_utils.get_dict_properties(obj, columns)
         return display_columns, data
