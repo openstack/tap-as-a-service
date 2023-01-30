@@ -29,7 +29,7 @@ class ServiceDriverContext(object):
 class TapServiceContext(ServiceDriverContext):
 
     def __init__(self, service_plugin, plugin_context, tap_service):
-        super(TapServiceContext, self).__init__(service_plugin, plugin_context)
+        super().__init__(service_plugin, plugin_context)
         self._tap_service = tap_service
         self._tap_id_association = None
         self._setup_tap_id_association(tap_service['id'])
@@ -59,7 +59,7 @@ class TapServiceContext(ServiceDriverContext):
 class TapFlowContext(ServiceDriverContext):
 
     def __init__(self, service_plugin, plugin_context, tap_flow):
-        super(TapFlowContext, self).__init__(service_plugin, plugin_context)
+        super().__init__(service_plugin, plugin_context)
         self._tap_flow = tap_flow
 
     @property

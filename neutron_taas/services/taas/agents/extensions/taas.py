@@ -81,8 +81,8 @@ class TaasAgentExtension(l2_extension.L2AgentExtension):
         """
         self.agent_api = agent_api
 
-    def handle_port(self, context, port):
+    def handle_port(self, context, data):
         pass
 
-    def delete_port(self, context, port):
+    def delete_port(self, context, data):
         pass

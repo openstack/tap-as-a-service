@@ -23,6 +23,9 @@ class SriovNicSwitchDriverInvocationError(qexception.Invalid):
                 "%(source_vf_index)s, %(vlan_filter)s, "
                 "%(vf_to_vf_all_vlans)s, %(direction)s")
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 
 class PciDeviceNotFoundById(qexception.NotFound):
     message = _("PCI device %(id)s not found")

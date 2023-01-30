@@ -35,7 +35,7 @@ TaaS_DRIVER_NAME = 'Taas SRIOV NIC Switch driver'
 
 class SriovNicTaasDriver(taas_base.TaasAgentDriver):
     def __init__(self):
-        super(SriovNicTaasDriver, self).__init__()
+        super().__init__()
         LOG.debug("Initializing Taas SRIOV NIC Switch Driver")
         self.agent_api = None
         self.root_helper = common.get_root_helper(cfg.CONF)
@@ -44,7 +44,6 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
     def initialize(self):
         LOG.debug("Initialize routine called for Taas SRIOV NIC Switch Driver")
         self.sriov_utils = sriov_utils.SriovNicUtils()
-        return
 
     def consume_api(self, agent_api):
         self.agent_api = agent_api
@@ -78,8 +77,6 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
                   'pf_device': port_params['pf_device'],
                   'src_vlans': port_params['src_vlans']})
 
-        return
-
     @log_helpers.log_method_call
     def delete_tap_service(self, tap_service_msg):
         """Delete a tap service
@@ -108,8 +105,6 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
                   'vf_index': port_params['vf_index'],
                   'pf_device': port_params['pf_device'],
                   'src_vlans': port_params['src_vlans']})
-
-        return
 
     @log_helpers.log_method_call
     def create_tap_flow(self, tap_flow_msg):
@@ -241,10 +236,10 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
                     LOG.error("TaaS error in invoking execute_sysfs_command")
                     with excutils.save_and_reraise_exception():
                         raise taas_exc.SriovNicSwitchDriverInvocationError(
-                            ts_pf_dev=ts_port_params['pf_device'],
-                            ts_vf_index=ts_port_params['vf_index'],
+                            tap_service_pf_device=ts_port_params['pf_device'],
+                            tap_service_vf_index=ts_port_params['vf_index'],
                             source_vf_index=src_port_params['vf_index'],
-                            common_vlans_rng_str=common_vlans_rng_str,
+                            vlan_filter=common_vlans_rng_str,
                             vf_to_vf_all_vlans=vf_to_vf_all_vlans,
                             direction=direction)
         return
@@ -405,5 +400,3 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
                                 common_vlans_rng_str=common_vlans_rng_str,
                                 vf_to_vf_all_vlans=vf_to_vf_all_vlans,
                                 direction=direction)
-
-        return

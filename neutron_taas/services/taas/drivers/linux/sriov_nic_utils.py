@@ -36,7 +36,6 @@ class SriovNicUtils(object):
     #
     def __init__(self):
         LOG.debug("SriovNicUtils: init called")
-        return
 
     #
     # Returns specified key-value affilation, if it exists.
@@ -167,7 +166,7 @@ class SriovNicUtils(object):
         addr_file = os.path.join(dev_path, if_name, 'address')
 
         try:
-            with open(addr_file) as f:
+            with open(addr_file, encoding="utf-8") as f:
                 mac = next(f).strip()
                 return mac
         except (IOError, StopIteration) as e:

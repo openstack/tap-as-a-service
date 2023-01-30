@@ -25,15 +25,14 @@ class TaasPluginApiMixin(object):
         self.host = host
         target = messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
-        super(TaasPluginApiMixin, self).__init__()
-        return
+        super().__init__()
 
 
 class TaasAgentRpcCallbackMixin(object):
     """Mixin for Taas agent Implementations."""
 
     def __init__(self):
-        super(TaasAgentRpcCallbackMixin, self).__init__()
+        super().__init__()
 
     def consume_api(self, agent_api):
         """Receive neutron agent API object

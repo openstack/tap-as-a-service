@@ -35,12 +35,12 @@ TaaS_DRIVER_NAME = 'Taas OVS driver'
 
 class OVSBridge_tap_extension(ovs_lib.OVSBridge):
     def __init__(self, br_name, root_helper):
-        super(OVSBridge_tap_extension, self).__init__(br_name)
+        super().__init__(br_name)
 
 
 class OvsTaasDriver(taas_base.TaasAgentDriver):
     def __init__(self):
-        super(OvsTaasDriver, self).__init__()
+        super().__init__()
         LOG.debug("Initializing Taas OVS Driver")
         self.agent_api = None
         self.root_helper = common.get_root_helper(cfg.CONF)
@@ -196,8 +196,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                  "output:NXM_OF_IN_PORT[])" %
                                  taas_ovs_consts.TAAS_SEND_UCAST))
 
-        return
-
     def consume_api(self, agent_api):
         self.agent_api = agent_api
 
@@ -283,8 +281,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
             utils.execute(['brctl', 'setageing', linux_br_name, 0],
                           run_as_root=True, privsep_exec=True)
 
-        return
-
     @log_helpers.log_method_call
     def delete_tap_service(self, tap_service_msg):
         """Delete a tap service
@@ -323,8 +319,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_CHECK,
                                  tun_id=taas_id)
 
-        return
-
     @log_helpers.log_method_call
     def create_tap_flow(self, tap_flow_msg):
         """Create a tap flow
@@ -350,14 +344,14 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         patch_int_tap_id = self.int_br.get_port_ofport('patch-int-tap')
 
         # Add flow(s) in br-int
-        if direction == 'OUT' or direction == 'BOTH':
+        if direction in ('OUT', 'BOTH'):
             self.int_br.add_flow(table=0,
                                  priority=20,
                                  in_port=ovs_port_id,
                                  actions="normal,mod_vlan_vid:%s,output:%s" %
                                  (str(taas_id), str(patch_int_tap_id)))
 
-        if direction == 'IN' or direction == 'BOTH':
+        if direction in ('IN', 'BOTH'):
             port_mac = tap_flow_msg['port_mac']
 
             #
@@ -411,8 +405,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              actions="resubmit(,%s)" %
                              taas_ovs_consts.TAAS_SRC_RESPOND)
 
-        return
-
     @log_helpers.log_method_call
     def delete_tap_flow(self, tap_flow_msg):
         """Delete a tap flow
@@ -436,11 +428,11 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         ovs_port_id = ovs_port.ofport
 
         # Delete flow(s) from br-int
-        if direction == 'OUT' or direction == 'BOTH':
+        if direction in ('OUT', 'BOTH'):
             self.int_br.delete_flows(table=0,
                                      in_port=ovs_port_id)
 
-        if direction == 'IN' or direction == 'BOTH':
+        if direction in ('IN', 'BOTH'):
             port_mac = tap_flow_msg['port_mac']
 
             #
@@ -465,8 +457,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
             #                                    taas_id,
             #                                    patch_int_tap_id)
 
-        return
-
     def update_tunnel_flood_flow(self):
         flow_action = self._create_tunnel_flood_flow_action()
         if flow_action != "":
@@ -482,7 +472,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         tunnel_ports_exist = False
 
         for port_name in port_name_list:
-            if (port_name != 'patch-int') and (port_name != 'patch-tun-tap'):
+            if port_name not in ('patch-int', 'patch-tun-tap'):
                 flow_action += (",output:%d" %
                                 self.tun_br.get_port_ofport(port_name))
                 tunnel_ports_exist = True
@@ -524,8 +514,6 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              dl_dst="01:00:00:00:00:00/01:00:00:00:00:00",
                              actions=flow_action)
 
-        return
-
     #
     # Removes or updates a special flow in br-int to mirror (duplicate
     # and redirect to 'out_port_id') all ingress broadcast/multicast
@@ -557,5 +545,3 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                      dl_vlan=vlan_id,
                                      dl_dst=("01:00:00:00:00:00/"
                                              "01:00:00:00:00:00"))
-
-        return

@@ -61,7 +61,7 @@ class CreateTapFlow(command.ShowOne):
     _description = _("Create a tap flow")
 
     def get_parser(self, prog_name):
-        parser = super(CreateTapFlow, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         nc_osc_utils.add_project_owner_option_to_parser(parser)
         _add_updatable_args(parser)
         parser.add_argument(
@@ -127,7 +127,7 @@ class ListTapFlow(command.Lister):
     _description = _("List tap flows that belong to a given tenant")
 
     def get_parser(self, prog_name):
-        parser = super(ListTapFlow, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         nc_osc_utils.add_project_owner_option_to_parser(parser)
 
         return parser
@@ -154,7 +154,7 @@ class ShowTapFlow(command.ShowOne):
     _description = _("Show information of a given tap flow")
 
     def get_parser(self, prog_name):
-        parser = super(ShowTapFlow, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_FLOW,
             metavar="<%s>" % TAP_FLOW,
@@ -175,7 +175,7 @@ class DeleteTapFlow(command.Command):
     _description = _("Delete a tap flow")
 
     def get_parser(self, prog_name):
-        parser = super(DeleteTapFlow, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_FLOW,
             metavar="<%s>" % TAP_FLOW,
@@ -207,7 +207,7 @@ class UpdateTapFlow(command.ShowOne):
     _description = _("Update a tap flow.")
 
     def get_parser(self, prog_name):
-        parser = super(UpdateTapFlow, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             TAP_FLOW,
             metavar="<%s>" % TAP_FLOW,
