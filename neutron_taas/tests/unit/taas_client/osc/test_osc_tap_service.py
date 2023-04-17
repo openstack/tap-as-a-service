@@ -17,6 +17,7 @@ import operator
 from unittest import mock
 
 from neutronclient.tests.unit.osc.v2 import fakes as test_fakes
+from openstack.network.v2 import tap_service
 from osc_lib import utils as osc_utils
 from osc_lib.utils import columns as column_util
 from oslo_utils import uuidutils
@@ -43,11 +44,10 @@ def _get_data(attrs, columns=sorted_columns):
 class TestCreateTapService(test_fakes.TestNeutronClientOSCV2):
 
     columns = (
-        'ID',
-        'Name',
-        'Port',
-        'Status',
-        'Tenant',
+        'id',
+        'name',
+        'port_id',
+        'status',
     )
 
     def setUp(self):
@@ -56,12 +56,17 @@ class TestCreateTapService(test_fakes.TestNeutronClientOSCV2):
 
     def test_create_tap_service(self):
         """Test Create Tap Service."""
+        port_id = uuidutils.generate_uuid()
         fake_tap_service = fakes.FakeTapService.create_tap_service(
-            attrs={'port_id': uuidutils.generate_uuid()}
+            attrs={'port_id': port_id}
         )
-
-        self.neutronclient.post = mock.Mock(
-            return_value={osc_tap_service.TAP_SERVICE: fake_tap_service})
+        self.app.client_manager.network = mock.Mock()
+        self.app.client_manager.network.create_tap_service = mock.Mock(
+            return_value=fake_tap_service)
+        self.app.client_manager.network.find_port = mock.Mock(
+            return_value={'id': port_id})
+        self.app.client_manager.network.find_tap_service = mock.Mock(
+            side_effect=lambda _, name_or_id: {'id': name_or_id})
         arg_list = [
             '--name', fake_tap_service['name'],
             '--port', fake_tap_service['port_id'],
@@ -73,21 +78,19 @@ class TestCreateTapService(test_fakes.TestNeutronClientOSCV2):
         ]
 
         parsed_args = self.check_parser(self.cmd, arg_list, verify_list)
-        self.neutronclient.find_resource = mock.Mock(
-            return_value={'id': fake_tap_service['port_id']})
+        self.app.client_manager.network.find_tap_service = mock.Mock(
+            return_value=fake_tap_service)
+
         columns, data = self.cmd.take_action(parsed_args)
-        self.neutronclient.post.assert_called_once_with(
-            '/taas/tap_services',
-            body={
-                osc_tap_service.TAP_SERVICE:
-                    {
-                        'name': fake_tap_service['name'],
-                        'port_id': fake_tap_service['port_id']
-                    }
-            }
-        )
+        create_tap_s_mock = self.app.client_manager.network.create_tap_service
+        create_tap_s_mock.assert_called_once_with(
+            **{'name': fake_tap_service['name'],
+               'port_id': fake_tap_service['port_id']})
         self.assertEqual(self.columns, columns)
-        self.assertItemEqual(_get_data(fake_tap_service), data)
+        fake_data = _get_data(
+            fake_tap_service,
+            osc_tap_service._get_columns(fake_tap_service)[1])
+        self.assertEqual(fake_data, data)
 
 
 class TestListTapService(test_fakes.TestNeutronClientOSCV2):
@@ -100,7 +103,10 @@ class TestListTapService(test_fakes.TestNeutronClientOSCV2):
         fake_tap_services = fakes.FakeTapService.create_tap_services(
             attrs={'port_id': uuidutils.generate_uuid()},
             count=4)
-        self.neutronclient.list = mock.Mock(return_value=fake_tap_services)
+        self.app.client_manager.network = mock.Mock()
+        self.app.client_manager.network.tap_services = mock.Mock(
+            return_value=fake_tap_services)
+
         arg_list = []
         verify_list = []
 
@@ -108,20 +114,22 @@ class TestListTapService(test_fakes.TestNeutronClientOSCV2):
 
         headers, data = self.cmd.take_action(parsed_args)
 
-        self.neutronclient.list.assert_called_once()
+        self.app.client_manager.network.tap_services.assert_called_once()
         self.assertEqual(headers, list(headers_long))
         self.assertListItemEqual(
             list(data),
             [_get_data(fake_tap_service, columns_long) for fake_tap_service
-             in fake_tap_services[osc_tap_service.TAP_SERVICES]]
+             in fake_tap_services]
         )
 
 
 class TestDeleteTapService(test_fakes.TestNeutronClientOSCV2):
     def setUp(self):
         super(TestDeleteTapService, self).setUp()
-        self.neutronclient.find_resource = mock.Mock(
-            side_effect=lambda _, name_or_id: {'id': name_or_id})
+        self.app.client_manager.network = mock.Mock()
+        self.app.client_manager.network.find_tap_service = mock.Mock(
+            side_effect=lambda name_or_id, ignore_missing:
+            tap_service.TapService(id=name_or_id))
         self.cmd = osc_tap_service.DeleteTapService(self.app, self.namespace)
 
     def test_delete_tap_service(self):
@@ -130,7 +138,7 @@ class TestDeleteTapService(test_fakes.TestNeutronClientOSCV2):
         fake_tap_service = fakes.FakeTapService.create_tap_service(
             attrs={'port_id': uuidutils.generate_uuid()}
         )
-        self.neutronclient.delete = mock.Mock()
+        self.app.client_manager.network.delete_tap_service = mock.Mock()
 
         arg_list = [
             fake_tap_service['id'],
@@ -140,20 +148,27 @@ class TestDeleteTapService(test_fakes.TestNeutronClientOSCV2):
         ]
 
         parsed_args = self.check_parser(self.cmd, arg_list, verify_list)
-
         result = self.cmd.take_action(parsed_args)
 
-        self.neutronclient.delete.assert_called_once_with(
-            osc_tap_service.resource_path % ('tap_services',
-                                             fake_tap_service['id']))
+        mock_delete_tap_s = self.app.client_manager.network.delete_tap_service
+        mock_delete_tap_s.assert_called_once_with(fake_tap_service['id'])
         self.assertIsNone(result)
 
 
 class TestShowTapService(test_fakes.TestNeutronClientOSCV2):
+    columns = (
+        'id',
+        'name',
+        'port_id',
+        'status',
+    )
+
     def setUp(self):
         super(TestShowTapService, self).setUp()
-        self.neutronclient.find_resource = mock.Mock(
-            side_effect=lambda _, name_or_id: {'id': name_or_id})
+        self.app.client_manager.network = mock.Mock()
+        self.app.client_manager.network.find_tap_service = mock.Mock(
+            side_effect=lambda name_or_id, ignore_missing:
+            tap_service.TapService(id=name_or_id))
         self.cmd = osc_tap_service.ShowTapService(self.app, self.namespace)
 
     def test_show_tap_service(self):
@@ -162,8 +177,8 @@ class TestShowTapService(test_fakes.TestNeutronClientOSCV2):
         fake_tap_service = fakes.FakeTapService.create_tap_service(
             attrs={'port_id': uuidutils.generate_uuid()}
         )
-        self.neutronclient.get = mock.Mock(
-            return_value={osc_tap_service.TAP_SERVICE: fake_tap_service})
+        self.app.client_manager.network.get_tap_service = mock.Mock(
+            return_value=fake_tap_service)
         arg_list = [
             fake_tap_service['id'],
         ]
@@ -175,11 +190,14 @@ class TestShowTapService(test_fakes.TestNeutronClientOSCV2):
 
         headers, data = self.cmd.take_action(parsed_args)
 
-        self.neutronclient.get.assert_called_once_with(
-            osc_tap_service.resource_path % ('tap_services',
-                                             fake_tap_service['id']))
-        self.assertEqual(sorted_headers, headers)
-        self.assertItemEqual(_get_data(fake_tap_service), data)
+        mock_get_tap_s = self.app.client_manager.network.get_tap_service
+        mock_get_tap_s.assert_called_once_with(
+            fake_tap_service['id'])
+        self.assertEqual(self.columns, headers)
+        fake_data = _get_data(
+            fake_tap_service,
+            osc_tap_service._get_columns(fake_tap_service)[1])
+        self.assertItemEqual(fake_data, data)
 
 
 class TestUpdateTapService(test_fakes.TestNeutronClientOSCV2):
@@ -187,18 +205,19 @@ class TestUpdateTapService(test_fakes.TestNeutronClientOSCV2):
     _new_name = 'new_name'
 
     columns = (
-        'ID',
-        'Name',
-        'Port',
-        'Status',
-        'Tenant',
+        'id',
+        'name',
+        'port_id',
+        'status',
     )
 
     def setUp(self):
         super(TestUpdateTapService, self).setUp()
         self.cmd = osc_tap_service.UpdateTapService(self.app, self.namespace)
-        self.neutronclient.find_resource = mock.Mock(
-            side_effect=lambda _, name_or_id: {'id': name_or_id})
+        self.app.client_manager.network = mock.Mock()
+        self.app.client_manager.network.find_tap_service = mock.Mock(
+            side_effect=lambda name_or_id, ignore_missing:
+            tap_service.TapService(id=name_or_id))
 
     def test_update_tap_service(self):
         """Test update tap service"""
@@ -208,8 +227,8 @@ class TestUpdateTapService(test_fakes.TestNeutronClientOSCV2):
         new_tap_service = copy.deepcopy(fake_tap_service)
         new_tap_service['name'] = self._new_name
 
-        self.neutronclient.put = mock.Mock(
-            return_value={osc_tap_service.TAP_SERVICE: new_tap_service})
+        self.app.client_manager.network.update_tap_service = mock.Mock(
+            return_value=new_tap_service)
 
         arg_list = [
             fake_tap_service['id'],
@@ -221,9 +240,11 @@ class TestUpdateTapService(test_fakes.TestNeutronClientOSCV2):
         columns, data = self.cmd.take_action(parsed_args)
         attrs = {'name': self._new_name}
 
-        self.neutronclient.put.assert_called_once_with(
-            osc_tap_service.resource_path % ('tap_services',
-                                             new_tap_service['id']),
-            {osc_tap_service.TAP_SERVICE: attrs})
+        mock_update_tap_s = self.app.client_manager.network.update_tap_service
+        mock_update_tap_s.assert_called_once_with(
+            fake_tap_service['id'], **attrs)
         self.assertEqual(self.columns, columns)
-        self.assertItemEqual(_get_data(new_tap_service), data)
+        fake_data = _get_data(
+            new_tap_service,
+            osc_tap_service._get_columns(new_tap_service)[1])
+        self.assertItemEqual(fake_data, data)
