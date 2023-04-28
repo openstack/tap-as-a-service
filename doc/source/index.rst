@@ -19,6 +19,7 @@ Contents:
    presentations
    usage
    mirroring_with_ovs_driver
+   mirroring_sriov_ports
 
 Indices and tables
 ==================
