@@ -34,8 +34,10 @@ TaaS_DRIVER_NAME = 'Taas OVS driver'
 
 
 class OVSBridge_tap_extension(ovs_lib.OVSBridge):
-    def __init__(self, br_name, root_helper):
-        super().__init__(br_name)
+    def __init__(self, br_name,
+                 root_helper,
+                 datapath_type=n_ovs_consts.OVS_DATAPATH_SYSTEM):
+        super().__init__(br_name, datapath_type=datapath_type)
 
 
 class OvsTaasDriver(taas_base.TaasAgentDriver):
@@ -44,11 +46,15 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         LOG.debug("Initializing Taas OVS Driver")
         self.agent_api = None
         self.root_helper = common.get_root_helper(cfg.CONF)
+        self.datapath_type = cfg.CONF.OVS.datapath_type
+        self.tunnel_types = cfg.CONF.AGENT.tunnel_types
 
     def initialize(self):
         self.int_br = self.agent_api.request_int_br()
         self.tun_br = self.agent_api.request_tun_br()
-        self.tap_br = OVSBridge_tap_extension('br-tap', self.root_helper)
+        self.tap_br = OVSBridge_tap_extension('br-tap',
+                                              self.root_helper,
+                                              datapath_type=self.datapath_type)
 
         # Prepare OVS bridges for TaaS
         self.setup_ovs_bridges()
@@ -61,7 +67,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         # Regenerate the flow in br-tun's TAAS_SEND_FLOOD table
         # to ensure all existing tunnel ports are included.
         #
-        self.update_tunnel_flood_flow()
+        if self.tunnel_types:
+            self.update_tunnel_flood_flow()
 
     def setup_ovs_bridges(self):
         #
@@ -76,29 +83,36 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         # Connect br-tap to br-int and br-tun
         self.int_br.add_patch_port('patch-int-tap', 'patch-tap-int')
         self.tap_br.add_patch_port('patch-tap-int', 'patch-int-tap')
-        self.tun_br.add_patch_port('patch-tun-tap', 'patch-tap-tun')
-        self.tap_br.add_patch_port('patch-tap-tun', 'patch-tun-tap')
+        if self.tunnel_types:
+            self.tun_br.add_patch_port('patch-tun-tap', 'patch-tap-tun')
+            self.tap_br.add_patch_port('patch-tap-tun', 'patch-tun-tap')
 
         # Get patch port IDs
         patch_tap_int_id = self.tap_br.get_port_ofport('patch-tap-int')
-        patch_tap_tun_id = self.tap_br.get_port_ofport('patch-tap-tun')
-        patch_tun_tap_id = self.tun_br.get_port_ofport('patch-tun-tap')
+        if self.tunnel_types:
+            patch_tap_tun_id = self.tap_br.get_port_ofport('patch-tap-tun')
+            patch_tun_tap_id = self.tun_br.get_port_ofport('patch-tun-tap')
 
         # Purge all existing Taas flows from br-tap and br-tun
         self.tap_br.delete_flows(table=0)
         self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_LOC)
         self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_REM)
 
-        self.tun_br.delete_flows(table=0,
-                                 in_port=patch_tun_tap_id)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SEND_UCAST)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SEND_FLOOD)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_CLASSIFY)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_CHECK)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_CHECK)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_RESPOND)
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_RESPOND)
+        if self.tunnel_types:
+            self.tun_br.delete_flows(table=0,
+                                     in_port=patch_tun_tap_id)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SEND_UCAST)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SEND_FLOOD)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_CLASSIFY)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_CHECK)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_CHECK)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_RESPOND)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_RESPOND)
 
+            #
+            # Configure standard TaaS flows in br-tun
+            #
+            self._setup_flows_for_tun_br(patch_tun_tap_id)
         #
         # Configure standard TaaS flows in br-tap
         #
@@ -108,26 +122,29 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              actions="resubmit(,%s)" %
                              taas_ovs_consts.TAAS_RECV_LOC)
 
-        self.tap_br.add_flow(table=0,
-                             priority=1,
-                             in_port=patch_tap_tun_id,
-                             actions="resubmit(,%s)" %
-                             taas_ovs_consts.TAAS_RECV_REM)
+        if self.tunnel_types:
+            self.tap_br.add_flow(table=0,
+                                 priority=1,
+                                 in_port=patch_tap_tun_id,
+                                 actions="resubmit(,%s)" %
+                                 taas_ovs_consts.TAAS_RECV_REM)
 
         self.tap_br.add_flow(table=0,
                              priority=0,
                              actions="drop")
 
-        self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_LOC,
-                             priority=0,
-                             actions="output:%s" % str(patch_tap_tun_id))
+        if self.tunnel_types:
+            self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                 priority=0,
+                                 actions="output:%s" % str(patch_tap_tun_id))
 
         self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_REM,
                              priority=0,
                              actions="drop")
 
+    def _setup_flows_for_tun_br(self, patch_tun_tap_id):
         #
-        # Configure standard Taas flows in br-tun
+        # Configure standard Taas flows in tun_br
         #
         self.tun_br.add_flow(table=0,
                              priority=1,
@@ -177,24 +194,23 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              reg0=0,
                              actions="output:%s" % str(patch_tun_tap_id))
 
-        self.tun_br.add_flow(table=taas_ovs_consts.TAAS_DST_RESPOND,
-                             priority=1,
-                             reg0=1,
-                             actions=(
-                                 "output:%s,"
-                                 "move:NXM_OF_VLAN_TCI[0..11]->NXM_NX_TUN_ID"
-                                 "[0..11],mod_vlan_vid:2,output:in_port" %
-                                 str(patch_tun_tap_id)))
+        self.tun_br.add_flow(
+            table=taas_ovs_consts.TAAS_DST_RESPOND,
+            priority=1, reg0=1,
+            actions=("output:%s,"
+                     "move:NXM_OF_VLAN_TCI[0..11]->NXM_NX_TUN_ID"
+                     "[0..11],mod_vlan_vid:2,output:in_port" %
+                     str(patch_tun_tap_id)))
 
-        self.tun_br.add_flow(table=taas_ovs_consts.TAAS_SRC_RESPOND,
-                             priority=1,
-                             actions=(
-                                 "learn(table=%s,hard_timeout=60,"
-                                 "priority=1,NXM_OF_VLAN_TCI[0..11],"
-                                 "load:NXM_OF_VLAN_TCI[0..11]->NXM_NX_TUN_ID"
-                                 "[0..11],load:0->NXM_OF_VLAN_TCI[0..11],"
-                                 "output:NXM_OF_IN_PORT[])" %
-                                 taas_ovs_consts.TAAS_SEND_UCAST))
+        self.tun_br.add_flow(
+            table=taas_ovs_consts.TAAS_SRC_RESPOND,
+            priority=1,
+            actions=("learn(table=%s,hard_timeout=60,"
+                     "priority=1,NXM_OF_VLAN_TCI[0..11],"
+                     "load:NXM_OF_VLAN_TCI[0..11]->NXM_NX_TUN_ID"
+                     "[0..11],load:0->NXM_OF_VLAN_TCI[0..11],"
+                     "output:NXM_OF_IN_PORT[])" %
+                     taas_ovs_consts.TAAS_SEND_UCAST))
 
     def consume_api(self, agent_api):
         self.agent_api = agent_api
@@ -244,38 +260,30 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                              actions="output:%s" % str(patch_tap_int_id))
 
         # Add flow(s) in br-tun
-        for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.add_flow(table=n_ovs_consts.TUN_TABLE[tunnel_type],
+        if self.tunnel_types:
+            for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
+                self.tun_br.add_flow(
+                    table=n_ovs_consts.TUN_TABLE[tunnel_type],
+                    priority=1,
+                    tun_id=taas_id,
+                    actions=("move:NXM_OF_VLAN_TCI[0..11]->"
+                             "NXM_NX_REG0[0..11],move:NXM_NX_TUN_ID"
+                             "[0..11]->NXM_OF_VLAN_TCI[0..11],"
+                             "resubmit(,%s)" %
+                             taas_ovs_consts.TAAS_CLASSIFY))
+
+            self.tun_br.add_flow(table=taas_ovs_consts.TAAS_DST_CHECK,
                                  priority=1,
                                  tun_id=taas_id,
-                                 actions=(
-                                     "move:NXM_OF_VLAN_TCI[0..11]->"
-                                     "NXM_NX_REG0[0..11],move:NXM_NX_TUN_ID"
-                                     "[0..11]->NXM_OF_VLAN_TCI[0..11],"
-                                     "resubmit(,%s)" %
-                                     taas_ovs_consts.TAAS_CLASSIFY))
-
-        self.tun_br.add_flow(table=taas_ovs_consts.TAAS_DST_CHECK,
-                             priority=1,
-                             tun_id=taas_id,
-                             actions="resubmit(,%s)" %
-                             taas_ovs_consts.TAAS_DST_RESPOND)
-
-        #
-        # Disable mac-address learning in the Linux bridge to which
-        # the OVS port is attached (via the veth pair) if the system
-        # uses OVSHybridIptablesFirewallDriver (Linux bridge & OVS).
-        # This will effectively turn the bridge into a hub, ensuring
-        # that all incoming mirrored traffic reaches the tap interface
-        # (used for attaching a VM to the bridge) irrespective of the
-        # destination mac addresses in mirrored packets.
-        #
+                                 actions="resubmit(,%s)" %
+                                 taas_ovs_consts.TAAS_DST_RESPOND)
 
         # Get hybrid plug info
         vif_details = port.get('binding:vif_details')
         is_hybrid_plug = vif_details.get('ovs_hybrid_plug')
 
-        if is_hybrid_plug:
+        if (is_hybrid_plug or
+                self.datapath_type == n_ovs_consts.OVS_DATAPATH_SYSTEM):
             ovs_port_name = ovs_port.port_name
             linux_br_name = ovs_port_name.replace('qvo', 'qbr')
             utils.execute(['brctl', 'setageing', linux_br_name, 0],
@@ -308,16 +316,18 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_REM,
                                  dl_vlan=taas_id)
 
-        # Delete flow(s) from br-tun
-        for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.delete_flows(table=n_ovs_consts.TUN_TABLE[tunnel_type],
+        if self.tunnel_types:
+            # Delete flow(s) from br-tun
+            for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
+                self.tun_br.delete_flows(
+                    table=n_ovs_consts.TUN_TABLE[tunnel_type],
+                    tun_id=taas_id)
+
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_CHECK,
                                      tun_id=taas_id)
 
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_DST_CHECK,
-                                 tun_id=taas_id)
-
-        self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_CHECK,
-                                 tun_id=taas_id)
+            self.tun_br.delete_flows(table=taas_ovs_consts.TAAS_SRC_CHECK,
+                                     tun_id=taas_id)
 
     @log_helpers.log_method_call
     def create_tap_flow(self, tap_flow_msg):
@@ -388,22 +398,23 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
             #                                    patch_int_tap_id)
 
         # Add flow(s) in br-tun
-        for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
-            self.tun_br.add_flow(table=n_ovs_consts.TUN_TABLE[tunnel_type],
+        if self.tunnel_types:
+            for tunnel_type in n_ovs_consts.TUNNEL_NETWORK_TYPES:
+                self.tun_br.add_flow(
+                    table=n_ovs_consts.TUN_TABLE[tunnel_type],
+                    priority=1,
+                    tun_id=taas_id,
+                    actions=("move:NXM_OF_VLAN_TCI[0..11]->"
+                             "NXM_NX_REG0[0..11],move:NXM_NX_TUN_ID"
+                             "[0..11]->NXM_OF_VLAN_TCI[0..11],"
+                             "resubmit(,%s)" %
+                             taas_ovs_consts.TAAS_CLASSIFY))
+
+            self.tun_br.add_flow(table=taas_ovs_consts.TAAS_SRC_CHECK,
                                  priority=1,
                                  tun_id=taas_id,
-                                 actions=(
-                                     "move:NXM_OF_VLAN_TCI[0..11]->"
-                                     "NXM_NX_REG0[0..11],move:NXM_NX_TUN_ID"
-                                     "[0..11]->NXM_OF_VLAN_TCI[0..11],"
-                                     "resubmit(,%s)" %
-                                     taas_ovs_consts.TAAS_CLASSIFY))
-
-        self.tun_br.add_flow(table=taas_ovs_consts.TAAS_SRC_CHECK,
-                             priority=1,
-                             tun_id=taas_id,
-                             actions="resubmit(,%s)" %
-                             taas_ovs_consts.TAAS_SRC_RESPOND)
+                                 actions="resubmit(,%s)" %
+                                 taas_ovs_consts.TAAS_SRC_RESPOND)
 
     @log_helpers.log_method_call
     def delete_tap_flow(self, tap_flow_msg):
