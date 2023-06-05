@@ -25,6 +25,9 @@ function install_taas {
 function configure_taas_plugin {
     echo "Configuring taas"
     neutron_service_plugin_class_add taas
+    if is_service_enabled tap_mirror; then
+      neutron_service_plugin_class_add tapmirror
+    fi
     iniadd /$Q_PLUGIN_CONF_FILE service_providers service_provider "TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"
 }
 
