@@ -81,6 +81,59 @@ TapFlow Represents the port from which the traffic needs to be mirrored.
 Multiple TapFlow instances can be associated with a single TapService
 instance.
 
+Tap Mirror
+----------
+
+A ``tapmirror`` mirrors the traffic of a Neutron port using ``gre`` or
+``erspan v1`` tunnels.
+
+.. code-block:: python
+
+    'tap_mirrors': {
+        'id': {
+            'allow_post': False, 'allow_put': False,
+            'validate': {'type:uuid': None}, 'is_visible': True,
+            'primary_key': True},
+        'project_id': {
+            'allow_post': True, 'allow_put': False,
+            'validate': {'type:string': db_const.PROJECT_ID_FIELD_SIZE},
+            'required_by_policy': True, 'is_filter': True,
+            'is_sort_key': True, 'is_visible': True},
+        'name': {
+            'allow_post': True, 'allow_put': True,
+            'validate': {'type:string': None},
+            'is_visible': True, 'default': ''},
+        'description': {
+            'allow_post': True, 'allow_put': True,
+            'validate': {'type:string': None},
+            'is_visible': True, 'default': ''},
+        'port_id': {
+            'allow_post': True, 'allow_put': False,
+            'validate': {'type:uuid': None},
+            'enforce_policy': True, 'is_visible': True},
+        'directions': {
+            'allow_post': True, 'allow_put': False,
+            'validate': DIRECTION_SPEC,
+            'is_visible': True},
+        'remote_ip': {
+            'allow_post': True, 'allow_put': False,
+            'validate': {'type:ip_address': None},
+            'is_visible': True},
+        'mirror_type': {
+            'allow_post': True, 'allow_put': False,
+            'validate': {'type:values': mirror_types_list},
+            'is_visible': True},
+    }
+
+    mirror_types_list = ['erspanv1', 'gre']
+    DIRECTION_SPEC = {
+        'type:dict': {
+            'IN': {'type:integer': None, 'default': None, 'required': False},
+            'OUT': {'type:integer': None, 'default': None, 'required': False}
+        }
+    }
+
+
 API REFERENCE
 =============
 
@@ -116,3 +169,15 @@ and tap-as-a-service has an extension for taas related commands.
 
 * Update tap flow **openstack tap flow update** <tap flow id/tap flow name> --name <new name of the tap flow> --description <new description of the tap flow>
 
+Tap Mirror CLI
+^^^^^^^^^^^^^^
+
+* Create tap mirror: **openstack tap mirror create** --port <name or ID of the port to mirror> --name <name of the tap mirror> --directions <direction of the mirroring, a direction and mirror id pair, direction can be IN and OUT can be repeated to represent both IN and OUT> --remote-ip <The IP of the destination of the mirroring> --mirror-type <the type of the mirroring can be ger and erspanv1>
+
+* List tap mirror: **openstack tap mirror list**
+
+* Show tap mirror: **openstack tap mirror show** <tap mirror id/tap mirror name>
+
+* Delete tap mirror: **openstack tap mirror delete** <tap mirror id/tap mirror name>
+
+* Update tap mirror: **openstack tap mirror update** <tap mirror id or name> --name <new name of the tap mirror> --description <new description of the tap mirror>

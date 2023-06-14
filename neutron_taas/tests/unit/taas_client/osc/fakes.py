@@ -81,3 +81,42 @@ class FakeTapFlow:
             tap_flows.append(FakeTapFlow.create_tap_flow(attrs=attrs))
 
         return tap_flows
+
+
+class FakeTapMirror(object):
+
+    @staticmethod
+    def create_tap_mirror(attrs=None):
+        """Create a fake tap mirror."""
+        attrs = attrs or {}
+        tap_mirror_attrs = {
+            'id': uuidutils.generate_uuid(),
+            'tenant_id': uuidutils.generate_uuid(),
+            'name': 'test_tap_mirror' + uuidutils.generate_uuid(),
+            'port_id': uuidutils.generate_uuid(),
+            'directions': 'IN=99',
+            'remote_ip': '192.10.10.2',
+            'mirror_type': 'gre',
+        }
+        tap_mirror_attrs.update(attrs)
+        return copy.deepcopy(tap_mirror_attrs)
+
+    @staticmethod
+    def create_tap_mirrors(attrs=None, count=1):
+        """Create multiple fake tap mirrors."""
+
+        tap_mirrors = []
+        for i in range(0, count):
+            if attrs is None:
+                attrs = {
+                    'id': 'fake_id%d' % i,
+                    'port_id': uuidutils.generate_uuid(),
+                    'name': 'test_tap_mirror_%d' % i,
+                    'directions': 'IN=%d' % 99 + i,
+                    'remote_ip': '192.10.10.%d' % (i + 3),
+                }
+            elif getattr(attrs, 'id', None) is None:
+                attrs['id'] = 'fake_id%d' % i
+            tap_mirrors.append(FakeTapMirror.create_tap_mirror(attrs=attrs))
+
+        return tap_mirrors
