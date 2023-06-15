@@ -13,10 +13,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import collections
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import utils
 from neutron.conf.agent import common
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron_lib.plugins.ml2 import ovs_constants as n_ovs_consts
 
 from neutron_taas.services.taas.agents.extensions import taas as taas_base
@@ -46,6 +48,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         LOG.debug("Initializing Taas OVS Driver")
         self.agent_api = None
         self.root_helper = common.get_root_helper(cfg.CONF)
+        ovs_conf.register_ovs_agent_opts(cfg.CONF)
         self.datapath_type = cfg.CONF.OVS.datapath_type
         self.tunnel_types = cfg.CONF.AGENT.tunnel_types
 
@@ -576,3 +579,105 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                                      dl_vlan=vlan_id,
                                      dl_dst=("01:00:00:00:00:00/"
                                              "01:00:00:00:00:00"))
+
+    @log_helpers.log_method_call
+    def create_tap_mirror(self, tap_mirror_msg):
+        source_port = tap_mirror_msg['port']
+        tap_mirror = tap_mirror_msg['tap_mirror']
+
+        type = ''
+        patch_int_tap_id = self.int_br.get_port_ofport('patch-int-tap')
+        patch_tap_int_id = self.tap_br.get_port_ofport('patch-tap-int')
+
+        # Get OVS port id for tap flow port
+        ovs_port = self.int_br.get_vif_port_by_id(source_port['id'])
+        ovs_port_id = ovs_port.ofport
+
+        options = collections.OrderedDict()
+        options['remote_ip'] = tap_mirror['remote_ip']
+        if 'erspan' in tap_mirror['mirror_type']:
+            type = 'erspan'
+            # For ERSPAN type 2 (version I) as that is supported
+            # only from taas
+            options['erspan_ver'] = "1"
+        else:
+            type = 'gre'
+        directions = tap_mirror['directions']
+
+        for direction, tunnel_id in directions.items():
+            options['erspan_idx'] = str(tunnel_id)
+            # Note(lajoskatona): this is treated as hexa, so
+            # spanId will be d102, and Index will be d258 in the packet.
+            # As OVN doesn't care about this let's have OVS driver the same
+            # behaviour.
+            options['key'] = str(tunnel_id)
+            port_name = 'tm_%s_%s' % (direction.lower(),
+                                      tap_mirror['id'][0:6])
+            attrs = [('type', type),
+                     ('options', options)]
+            mirror_of_port = self.tap_br.add_port(port_name, *attrs)
+
+            if direction == 'IN':
+                self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                     priority=20,
+                                     dl_dst=source_port['mac_address'],
+                                     actions="output:%s" % str(mirror_of_port))
+                self.int_br.add_flow(
+                    table=0,
+                    priority=20,
+                    dl_dst=source_port['mac_address'],
+                    actions="output:%s,resubmit(,%s)" %
+                            (str(patch_int_tap_id),
+                             str(n_ovs_consts.PACKET_RATE_LIMIT)))
+            if direction == 'OUT':
+                self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                     priority=20,
+                                     dl_src=source_port['mac_address'],
+                                     actions="output:%s" % str(mirror_of_port))
+                self.int_br.add_flow(
+                    table=0,
+                    priority=20,
+                    in_port=ovs_port_id,
+                    actions="output:%s,resubmit(,%s)" %
+                            (str(patch_int_tap_id),
+                             str(n_ovs_consts.PACKET_RATE_LIMIT)))
+
+        # Add flow(s) in br-tap
+        self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_LOC,
+                             priority=1,
+                             dl_dst=source_port['mac_address'],
+                             actions="output:in_port")
+
+        self.tap_br.add_flow(table=taas_ovs_consts.TAAS_RECV_REM,
+                             priority=1,
+                             dl_dst=source_port['mac_address'],
+                             actions="output:%s" % str(patch_tap_int_id))
+
+    @log_helpers.log_method_call
+    def delete_tap_mirror(self, tap_mirror_msg):
+        source_port = tap_mirror_msg['port']
+        tap_mirror = tap_mirror_msg['tap_mirror']
+        directions = tap_mirror['directions']
+
+        # Get OVS port id for tap flow port
+        ovs_port = self.int_br.get_vif_port_by_id(source_port['id'])
+        ovs_port_id = ovs_port.ofport
+
+        self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_REM,
+                                 dl_dst=source_port['mac_address'])
+        self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                 dl_dst=source_port['mac_address'])
+
+        for direction, tunnel_id in directions.items():
+            if direction == 'IN':
+                self.int_br.delete_flows(table=0,
+                                         dl_dst=source_port['mac_address'])
+                self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                         dl_dst=source_port['mac_address'])
+            if direction == 'OUT':
+                self.int_br.delete_flows(table=0, in_port=ovs_port_id)
+                self.tap_br.delete_flows(table=taas_ovs_consts.TAAS_RECV_LOC,
+                                         dl_src=source_port['mac_address'])
+            port_name = 'tm_%s_%s' % (direction.lower(),
+                                      tap_mirror['id'][0:6])
+            self.tap_br.delete_port(port_name)

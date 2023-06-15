@@ -15,6 +15,7 @@
 # under the License.
 
 from neutron_lib import rpc as n_rpc
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
 
@@ -59,4 +60,16 @@ class TaasAgentApi:
 
         cctxt = self.client.prepare(fanout=True)
         cctxt.cast(context, 'delete_tap_flow', tap_flow_msg=tap_flow_msg,
+                   host=host)
+
+    @log_helpers.log_method_call
+    def create_tap_mirror(self, context, tap_mirror_msg, host):
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'create_tap_mirror', tap_mirror_msg=tap_mirror_msg,
+                   host=host)
+
+    @log_helpers.log_method_call
+    def delete_tap_mirror(self, context, tap_mirror_msg, host):
+        cctxt = self.client.prepare(fanout=True)
+        cctxt.cast(context, 'delete_tap_mirror', tap_mirror_msg=tap_mirror_msg,
                    host=host)

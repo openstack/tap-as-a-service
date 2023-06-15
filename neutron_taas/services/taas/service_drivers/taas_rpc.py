@@ -30,6 +30,7 @@ from neutron_taas.services.taas.service_drivers import taas_agent_api
 from neutron_taas.services.taas import taas_plugin
 
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import excutils
 
@@ -327,4 +328,54 @@ class TaasRpcDriver(service_drivers.TaasBaseDriver):
         self.agent_rpc.delete_tap_flow(context._plugin_context, rpc_msg, host)
 
     def delete_tap_flow_postcommit(self, context):
+        pass
+
+    @log_helpers.log_method_call
+    def create_tap_mirror_precommit(self, context):
+        pass
+
+    @log_helpers.log_method_call
+    def create_tap_mirror_postcommit(self, context):
+        """Send Tap Mirror creation RPC message to agent.
+
+        This RPC message includes ....
+        """
+        # Get taas id associated with the Tap Service
+        tm = context.tap_mirror
+        port = self.service_plugin.get_port_details(context._plugin_context,
+                                                    tm['port_id'])
+        host = port['binding:host_id']
+
+        rpc_msg = {'tap_mirror': tm,
+                   'port': port}
+
+        self.agent_rpc.create_tap_mirror(context._plugin_context,
+                                         rpc_msg, host)
+
+    @log_helpers.log_method_call
+    def delete_tap_mirror_precommit(self, context):
+        """Send Tap Mirror deletion RPC message to agent.
+
+        This RPC message includes .....
+        """
+        tm = context.tap_mirror
+
+        try:
+            port = self.service_plugin.get_port_details(
+                context._plugin_context,
+                tm['port_id'])
+            host = port['binding:host_id']
+        except n_exc.PortNotFound:
+            # if not found, we just pass to None
+            port = None
+            host = None
+
+        rpc_msg = {'tap_mirror': tm,
+                   'port': port}
+
+        self.agent_rpc.delete_tap_mirror(context._plugin_context,
+                                         rpc_msg, host)
+
+    @log_helpers.log_method_call
+    def delete_tap_mirror_postcommit(self, context):
         pass

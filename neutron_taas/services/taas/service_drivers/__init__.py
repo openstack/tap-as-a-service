@@ -55,3 +55,19 @@ class TaasBaseDriver(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def delete_tap_flow_postcommit(self, context):
         pass
+
+    @abc.abstractmethod
+    def create_tap_mirror_precommit(self, context):
+        pass
+
+    @abc.abstractmethod
+    def create_tap_mirror_postcommit(self, context):
+        pass
+
+    @abc.abstractmethod
+    def delete_tap_mirror_precommit(self, context):
+        pass
+
+    @abc.abstractmethod
+    def delete_tap_mirror_postcommit(self, context):
+        pass

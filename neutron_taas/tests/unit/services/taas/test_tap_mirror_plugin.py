@@ -61,7 +61,8 @@ class TestTapMirrorPlugin(testlib_api.SqlTestCase):
         }
 
     @contextlib.contextmanager
-    def tap_mirror(self):
+    def tap_mirror(self, **kwargs):
+        self._tap_mirror.update(kwargs)
         req = {
             'tap_mirror': self._tap_mirror,
         }
@@ -70,8 +71,18 @@ class TestTapMirrorPlugin(testlib_api.SqlTestCase):
             mirror = self._plugin.create_tap_mirror(self._context, req)
         self._tap_mirror['id'] = mock.ANY
 
-        # TODO(lajoskatona): Add more checks for the pre/post phases
-        # (check the next patches)
+        self.driver.assert_has_calls([
+            mock.call.create_tap_mirror_precommit(mock.ANY),
+            mock.call.create_tap_mirror_postcommit(mock.ANY),
+        ])
+        pre_call_args = self.driver.create_tap_mirror_precommit.call_args[0][0]
+        self.assertEqual(self._context, pre_call_args._plugin_context)
+        self.assertEqual(self._tap_mirror, pre_call_args.tap_mirror)
+
+        post_call_args = self.driver.create_tap_mirror_postcommit.call_args
+        post_call_args = post_call_args[0][0]
+        self.assertEqual(self._context, post_call_args._plugin_context)
+        self.assertEqual(self._tap_mirror, post_call_args.tap_mirror)
 
         yield self._plugin.get_tap_mirror(self._context,
                                           mirror['id'])
@@ -87,6 +98,40 @@ class TestTapMirrorPlugin(testlib_api.SqlTestCase):
                 self.tap_mirror():
             pass
         self.assertEqual([], self.driver.mock_calls)
+
+    def test_create_duplicate_tunnel_id(self):
+        with self.tap_mirror() as tm1:
+            with mock.patch.object(self._plugin, 'get_tap_mirrors',
+                                   return_value=[tm1]):
+                with testtools.ExpectedException(
+                        taas_exc.TapMirrorTunnelConflict), \
+                        self.tap_mirror(directions={"IN": 101}):
+                    pass
+
+    def test_create_different_tunnel_id(self):
+        with self.tap_mirror() as tm1:
+            with mock.patch.object(self._plugin, 'get_tap_mirrors',
+                                   return_value=[tm1]):
+                with self.tap_mirror(directions={"IN": 102}):
+                    pass
+
+    def test_same_tunnel_id_different_direction(self):
+        with self.tap_mirror() as tm1:
+            with mock.patch.object(self._plugin, 'get_tap_mirrors',
+                                   return_value=[tm1]):
+                with testtools.ExpectedException(
+                        taas_exc.TapMirrorTunnelConflict), \
+                        self.tap_mirror(directions={"OUT": 101}):
+                    pass
+
+    def test_two_direction_tunnel_id(self):
+        with self.tap_mirror(directions={'IN': 101, 'OUT': 102}) as tm1:
+            with mock.patch.object(self._plugin, 'get_tap_mirrors',
+                                   return_value=[tm1]):
+                with testtools.ExpectedException(
+                        taas_exc.TapMirrorTunnelConflict), \
+                        self.tap_mirror(directions={"OUT": 101}):
+                    pass
 
     def test_delete_tap_mrror(self):
         with self.tap_mirror() as tm:

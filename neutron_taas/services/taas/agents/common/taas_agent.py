@@ -27,6 +27,7 @@ from neutron_lib import constants
 from neutron_lib import context as neutron_context
 from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
+from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_service import service
@@ -72,6 +73,12 @@ class TaasPluginApi(api.TaasPluginApiMixin):
         cctxt.cast(context, 'set_tap_flow_status', msg=msg, status=status,
                    host=host)
 
+    @log_helpers.log_method_call
+    def set_tap_mirror_status(self, msg, status, host):
+        LOG.debug("In RPC Call for set Tap Mirror status")
+        # TODO(lajoskatona): We can have a status field to indicate that the
+        #  Neutron port is UP, is it useful?
+
 
 class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
@@ -108,6 +115,16 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             'delete_tap_flow': {
                 'msg_name': 'tap_flow',
                 'set_status_func_name': 'set_tap_flow_status',
+                'fail_status': constants.PENDING_DELETE,
+                'succ_status': constants.INACTIVE},
+            'create_tap_mirror': {
+                'msg_name': 'tap_mirror',
+                'set_status_func_name': 'set_tap_mirror_status',
+                'fail_status': constants.ERROR,
+                'succ_status': constants.ACTIVE},
+            'delete_tap_mirror': {
+                'msg_name': 'tap_mirror',
+                'set_status_func_name': 'set_tap_mirror_status',
                 'fail_status': constants.PENDING_DELETE,
                 'succ_status': constants.INACTIVE},
             'periodic_tasks': {
@@ -212,6 +229,40 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             context,
             tap_flow_msg,
             'delete_tap_flow')
+
+    @log_helpers.log_method_call
+    def create_tap_mirror(self, context, tap_mirror_msg, host):
+        """Handle Rpc from plugin to create a tap_mirror."""
+        if not self._driver_and_host_verification(
+                host, tap_mirror_msg['port']):
+            LOG.debug("RPC Call for Create Tap Mirror. Either Host value [%s]"
+                      "(received in RPC) doesn't match the host value "
+                      "stored in agent [%s], or incompatible driver type. "
+                      "Ignoring the message.", host, self.conf.host)
+            return
+        LOG.debug("In RPC Call for Creae Tap Mirror: MSG=%s", tap_mirror_msg)
+
+        return self._invoke_driver_for_plugin_api(
+            context,
+            tap_mirror_msg,
+            'create_tap_mirror')
+
+    @log_helpers.log_method_call
+    def delete_tap_mirror(self, context, tap_mirror_msg, host):
+        """...."""
+        if not self._driver_and_host_verification(host,
+                                                  tap_mirror_msg['port']):
+            LOG.debug("RPC Call for Delete Tap Mirror. Either Host value [%s]"
+                      "(received in RPC) doesn't match the host value "
+                      "stored in agent [%s], or incompatible driver type. "
+                      "Ignoring the message.", host, self.conf.host)
+            return
+        LOG.debug("In RPC Call for Delete Tap Mirror: MSG=%s", tap_mirror_msg)
+
+        return self._invoke_driver_for_plugin_api(
+            context,
+            tap_mirror_msg,
+            'delete_tap_mirror')
 
     def _taas_rpc_setup(self):
         # setup RPC to msg taas plugin

@@ -23,10 +23,12 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import taas as taas_exc
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
+from oslo_utils import excutils
 
 from neutron_taas.common import constants as taas_consts
 from neutron_taas.db import tap_mirror_db
-
+from neutron_taas.services.taas.service_drivers import (service_driver_context
+                                                        as sd_context)
 
 LOG = logging.getLogger(__name__)
 
@@ -80,12 +82,23 @@ class TapMirrorPlugin(tap_mirror_db.Taas_mirror_db_mixin):
             if host is not None:
                 LOG.debug("Host on which the port is created = %s", host)
             else:
-                LOG.debug("Host could not be found, Port Binding disabled!")
+                LOG.debug("Host could not be found, Port Binding disbaled!")
+                # Fail here? Is it a valid usecase to create a mirror for a
+                # port that is not bound?
 
         with db_api.CONTEXT_WRITER.using(context):
             self._validate_tap_tunnel_id(context, t_m['directions'])
             tm = super().create_tap_mirror(context, tap_mirror)
+            # Precommit phase, is it necessary? tunnel id check should be in
+            # it....
+            driver_context = sd_context.TapMirrorContext(self, context, tm)
+            self.driver.create_tap_mirror_precommit(driver_context)
 
+            # Postcommit phase, do the backend stuff, or fail.
+            try:
+                self.driver.create_tap_mirror_postcommit(driver_context)
+            except Exception:
+                pass
         return tm
 
     def _validate_tap_tunnel_id(self, context, mirror_directions):
@@ -100,9 +113,23 @@ class TapMirrorPlugin(tap_mirror_db.Taas_mirror_db_mixin):
     def delete_tap_mirror(self, context, id):
         with db_api.CONTEXT_WRITER.using(context):
             tm = self.get_tap_mirror(context, id)
+
             if tm:
+                # Precommit phase
+                driver_context = sd_context.TapMirrorContext(
+                    self, context, tm)
+                self.driver.delete_tap_mirror_precommit(driver_context)
+
                 # check if tunnel id was really deleted
                 super().delete_tap_mirror(context, id)
+
+            # Postcommit phase, do the backend stuff, or fail.
+            try:
+                self.driver.delete_tap_mirror_postcommit(driver_context)
+            except Exception:
+                with excutils.save_and_reraise_exception():
+                    LOG.error("Failed to delete Tap Mirror on driver. "
+                              "tap_mirror: %s", id)
 
     @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
     @log_helpers.log_method_call

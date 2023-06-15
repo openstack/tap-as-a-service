@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Add possibility to create (CRUD) ``tap_mirrors`` with ``OVS`` backend.

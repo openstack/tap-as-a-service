@@ -57,3 +57,11 @@ class TaasAgentRpcCallbackMixin:
     def delete_tap_flow(self, context, tap_flow_msg, host):
         """Handle RPC cast from plugin to delete a tap flow"""
         pass
+
+    def create_tap_mirror(self, context, tap_mirror_msg, host):
+        """Handle RPC cast from plugin to create a Tap Mirror."""
+        pass
+
+    def delete_tap_mirror(self, context, tap_mirror_msg, host):
+        """Handle RPC cast from plugin to delete a Tap Mirror."""
+        pass

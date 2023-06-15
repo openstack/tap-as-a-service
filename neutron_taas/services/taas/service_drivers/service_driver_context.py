@@ -65,3 +65,14 @@ class TapFlowContext(ServiceDriverContext):
     @property
     def tap_flow(self):
         return self._tap_flow
+
+
+class TapMirrorContext(ServiceDriverContext):
+
+    def __init__(self, service_plugin, plugin_context, tap_mirror):
+        super().__init__(service_plugin, plugin_context)
+        self._tap_mirror = tap_mirror
+
+    @property
+    def tap_mirror(self):
+        return self._tap_mirror
