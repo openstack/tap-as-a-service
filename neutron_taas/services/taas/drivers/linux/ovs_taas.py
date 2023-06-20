@@ -278,7 +278,8 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         if is_hybrid_plug:
             ovs_port_name = ovs_port.port_name
             linux_br_name = ovs_port_name.replace('qvo', 'qbr')
-            utils.execute(['brctl', 'setageing', linux_br_name, 0],
+            utils.execute(['ip', 'link', 'set', linux_br_name,
+                           'type', 'bridge', 'ageing_time', 0],
                           run_as_root=True, privsep_exec=True)
 
     @log_helpers.log_method_call
