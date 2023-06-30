@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Add possibility to create (CRUD) ``tap_mirrors`` with ``OVN`` backend.
+    At least ``OVN`` ``v22.12.0`` is necessary to create mirrors.
+    Other tap-as-a-service APIs (tap-service and tap-flow) are not part
+    of this effort
+    (https://specs.openstack.org/openstack/neutron-specs/specs/2023.2/erspan-for-tap-as-a-service.html)
