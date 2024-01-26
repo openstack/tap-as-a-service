@@ -346,6 +346,10 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         taas_id = tap_flow_msg['taas_id']
         port = tap_flow_msg['port']
         direction = tap_flow_msg['tap_flow']['direction']
+        physical_network = tap_flow_msg['tf_nw']['physical_network'] \
+            if 'tf_nw' in tap_flow_msg else None
+        network_type = tap_flow_msg['tf_nw']['network_type'] \
+            if 'tf_nw' in tap_flow_msg else None
 
         # Get OVS port id for tap flow port
         ovs_port = self.int_br.get_vif_port_by_id(port['id'])
@@ -386,13 +390,29 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
             # Get VLAN id for tap flow port
             # port_dict = self.int_br.get_port_tag_dict()
             # port_vlan_id = port_dict[ovs_port.port_name]
+            if not physical_network:
+                self.int_br.add_flow(
+                    table=0,
+                    priority=20,
+                    # dl_vlan=port_vlan_id,
+                    dl_dst=port_mac,
+                    actions="normal,mod_vlan_vid:%s,output:%s" %
+                    (str(taas_id), str(patch_int_tap_id))
+                )
 
-            self.int_br.add_flow(table=0,
-                                 priority=20,
-                                 # dl_vlan=port_vlan_id,
-                                 dl_dst=port_mac,
-                                 actions="normal,mod_vlan_vid:%s,output:%s" %
-                                 (str(taas_id), str(patch_int_tap_id)))
+            else:
+                actions = "output:%s,mod_vlan_vid:%s,output:%s" % (
+                    str(ovs_port_id), str(taas_id), str(patch_int_tap_id)
+                )
+                if network_type == 'vlan':
+                    actions = 'strip_vlan,' + actions
+                self.int_br.add_flow(
+                    table=0,
+                    priority=20,
+                    # dl_vlan=port_vlan_id,
+                    dl_dst=port_mac,
+                    actions=actions
+                )
 
             # self._add_update_ingress_bcmc_flow(port_vlan_id,
             #                                    taas_id,

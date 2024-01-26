@@ -19,6 +19,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
+from neutron.db.models import segment
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
@@ -142,6 +143,28 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
                'vlan_filter': tap_flow['vlan_filter']}
 
         return db_utils.resource_fields(res, fields)
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
+    def get_port_network_data(self, context, port):
+        ns = context.session.query(
+            segment.NetworkSegment.network_id,
+            segment.NetworkSegment.physical_network,
+            segment.NetworkSegment.network_type
+        ).filter(
+            segment.NetworkSegment.network_id == port['network_id']
+        ).first()
+
+        if not ns:
+            LOG.debug("No Network Segment found for network_id %s",
+                      port['network_id'])
+            return
+
+        ns_data = {
+            'physical_network': ns['physical_network'],
+            'network_type': ns['network_type']
+        }
+        return ns_data
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_WRITER
