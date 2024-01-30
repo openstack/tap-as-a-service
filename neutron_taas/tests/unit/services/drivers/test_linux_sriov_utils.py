@@ -31,7 +31,7 @@ FAKE_SRIOV_PORT = {
     'id': 'fake_1', 'mac_address': "52:54:00:12:35:02",
     'binding:profile': {
         'pci_slot': None}, 'binding:vif_details': {'vlan': 20}
-    }
+}
 
 
 class TestSriovNicUtils(base.TaasTestCase):

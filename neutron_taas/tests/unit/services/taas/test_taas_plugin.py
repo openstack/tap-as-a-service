@@ -154,7 +154,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
         cfg.CONF.set_override("vlan_range_start", 1, group="taas")
         cfg.CONF.set_override("vlan_range_end", 3, group="taas")
         with self.tap_service() as ts_1, self.tap_service() as ts_2, \
-            self.tap_service() as ts_3, self.tap_service() as ts_4:
+                self.tap_service() as ts_3, self.tap_service() as ts_4:
             ts_id_1 = ts_1['id']
             ts_id_2 = ts_2['id']
             ts_id_3 = ts_3['id']
@@ -183,7 +183,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
     def test_create_tap_service_wrong_tenant_id(self):
         self._port_details['tenant_id'] = 'other-tenant'
         with testtools.ExpectedException(taas_exc.PortDoesNotBelongToTenant), \
-            self.tap_service():
+                self.tap_service():
             pass
         self.assertEqual([], self.driver.mock_calls)
 
@@ -220,7 +220,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
 
     def test_delete_tap_service_with_flow(self):
         with self.tap_service() as ts, \
-            self.tap_flow(tap_service=ts['id']) as tf:
+                self.tap_flow(tap_service=ts['id']) as tf:
             self._plugin.delete_tap_service(self._context, ts['id'])
             self._tap_service['id'] = ts['id']
             self._tap_flow['id'] = tf['id']
@@ -255,9 +255,9 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
 
     def test_create_tap_flow_wrong_tenant_id(self):
         with self.tap_service() as ts, \
-            testtools.ExpectedException(
-                taas_exc.TapServiceNotBelongToTenant), \
-            self.tap_flow(tap_service=ts['id'], tenant_id='other-tenant'):
+                testtools.ExpectedException(
+                    taas_exc.TapServiceNotBelongToTenant), \
+                self.tap_flow(tap_service=ts['id'], tenant_id='other-tenant'):
             pass
 
     def test_create_tap_flow_failed_on_service_driver(self):
@@ -275,7 +275,7 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
 
     def test_delete_tap_flow(self):
         with self.tap_service() as ts, \
-            self.tap_flow(tap_service=ts['id']) as tf:
+                self.tap_flow(tap_service=ts['id']) as tf:
             self._plugin.delete_tap_flow(self._context, tf['id'])
             self._tap_flow['id'] = tf['id']
         self.driver.assert_has_calls([

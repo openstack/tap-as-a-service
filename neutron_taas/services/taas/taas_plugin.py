@@ -88,7 +88,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         host = port['binding:host_id']
 
         if host is not None:
-            LOG.debug("Host on which the port is created = %s" % host)
+            LOG.debug("Host on which the port is created = %s", host)
         else:
             LOG.debug("Host could not be found, Port Binding disbaled!")
 

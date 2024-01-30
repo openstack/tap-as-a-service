@@ -188,7 +188,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         #
         if not self._is_driver_port_type_compatible(tap_service_msg['port']):
             LOG.debug("RPC Call for Delete Tap Service. Incompatible driver "
-                      "type. Ignoring the message. Host=[%s]" % (host))
+                      "type. Ignoring the message. Host=[%s]", host)
             return
         LOG.debug("In RPC Call for Delete Tap Service: MSG=%s",
                   tap_service_msg)
@@ -203,7 +203,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
             LOG.debug("RPC Call for Delete Tap Flow. Either Host value [%s]"
                       "(received in RPC) doesn't match the host value "
                       "stored in agent [%s], or incompatible driver type. "
-                      "Ignoring the message." % (host, self.conf.host))
+                      "Ignoring the message.", host, self.conf.host)
             return
         LOG.debug("In RPC Call for Delete Tap Flow: MSG=%s", tap_flow_msg)
 

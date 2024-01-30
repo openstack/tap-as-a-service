@@ -45,7 +45,7 @@ class TaasCallbacks(object):
 
     def sync_tap_resources(self, context, sync_tap_res, host):
         """Handle Rpc from Agent to sync up Tap resources."""
-        LOG.debug("In RPC Call for Sync Tap Resources: MSG=%s" % sync_tap_res)
+        LOG.debug("In RPC Call for Sync Tap Resources: MSG=%s", sync_tap_res)
 
         # Get list of configured tap-services
         active_tss = self.plugin.get_tap_services(
@@ -96,7 +96,7 @@ class TaasCallbacks(object):
     def set_tap_service_status(self, context, msg, status, host=None):
         """Handle Rpc from Agent to set the status of Tap resources."""
         LOG.info("In RPC Call to set tap service status: Host=%s, "
-                 "MSG=%s, STATUS=%s" % (host, msg, status))
+                 "MSG=%s, STATUS=%s", host, msg, status)
 
         # Clear the resource from DB once agent indicates successful deletion
         # by mech driver.
@@ -124,7 +124,7 @@ class TaasCallbacks(object):
     def set_tap_flow_status(self, context, msg, status, host=None):
         """Handle Rpc from Agent to set the status of Tap resources."""
         LOG.info("In RPC Call to set tap flow status: Host=%s, "
-                 "MSG=%s, STATUS=%s" % (host, msg, status))
+                 "MSG=%s, STATUS=%s", host, msg, status)
 
         # Clear the resource from DB once agent indicates successful deletion
         # by mech driver.
