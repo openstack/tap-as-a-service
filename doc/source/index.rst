@@ -20,6 +20,7 @@ Contents:
    usage
    mirroring_with_ovs_driver
    mirroring_sriov_ports
+   tap_mirrors_under_the_hood
 
 Indices and tables
 ==================

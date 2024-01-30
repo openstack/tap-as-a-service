@@ -169,15 +169,43 @@ and tap-as-a-service has an extension for taas related commands.
 
 * Update tap flow **openstack tap flow update** <tap flow id/tap flow name> --name <new name of the tap flow> --description <new description of the tap flow>
 
-Tap Mirror CLI
-^^^^^^^^^^^^^^
+Openstack CLI for tap mirrors
+-----------------------------
 
-* Create tap mirror: **openstack tap mirror create** --port <name or ID of the port to mirror> --name <name of the tap mirror> --directions <direction of the mirroring, a direction and mirror id pair, direction can be IN and OUT can be repeated to represent both IN and OUT> --remote-ip <The IP of the destination of the mirroring> --mirror-type <the type of the mirroring can be ger and erspanv1>
+* Create tap mirror: **openstack tap mirror create** --name <name of the tap mirror> --description <description for the tap mirror> --port <the name or UUID of the port to associate with the tap mirror> --directions <direction dict keys are IN and OUT, the value is the tunnel ID, i.e.: IN=102, can be repeated> --remote-ip <the destination of the mirroring> --mirror-type <can be gre or erspanv1>
 
-* List tap mirror: **openstack tap mirror list**
+* List tap mirrors: **openstack tap mirror list**
 
-* Show tap mirror: **openstack tap mirror show** <tap mirror id/tap mirror name>
+* Show tap mirrors: **openstack tap mirror show** <Name or ID of the tap mirror>
 
-* Delete tap mirror: **openstack tap mirror delete** <tap mirror id/tap mirror name>
+* Delete tap mirror: **openstack tap mirror delete** <Name or ID of the tap mirror>
 
-* Update tap mirror: **openstack tap mirror update** <tap mirror id or name> --name <new name of the tap mirror> --description <new description of the tap mirror>
+* Update tap mirror: **openstack tap mirror update** <Name or ID of the tap mirror> --name <name of the tap mirror> --description <description for the tap mirror>
+
+Workflow
+=========
+
+In this section we describe a simple sequence of steps to use TaaS.
+
+Workflow Sequence for tap services and tap flows
+------------------------------------------------
+
+1. Create a Neutron port with 'port_security_enabled' set to 'false'.
+
+2. Launch a VM (VM on which you want to monitor/receive the mirrored data).
+   Associate the Neutron port created in step 1 while creating the VM.
+
+3. Using Neutron Client command for TaaS **neutron tap-service-create** or
+   via REST APIs create a Tap Service instance by associating the port
+   created in step 1.
+
+4. Using Neutron Client command for TaaS **neutron tap-flow-create** or
+   via REST APIs create a Tap Flow instance by associating the Tap Service
+   instance created in step 3 and the target Neutron port from which you want
+   to mirror traffic (assuming the Neutron port from which the traffic
+   needs to be monitored already exists.)
+   Mirroring can be done for both incoming and/or outgoing traffic from the
+   target Neutron port.
+
+5. Observe the mirrored traffic on the monitoring VM by running tools such as
+   tcpdump.

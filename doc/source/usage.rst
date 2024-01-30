@@ -68,3 +68,41 @@ Usage Workflow
 
 5. Observe the mirrored traffic on the monitoring VM by running tools such as
    tcpdump.
+
+Worklow for tap mirrors
+--------------------------------
+
+1. Make sure that the destination of your mirroring is ready.
+   This can be a Host outside of your cloud, or a virtual machine
+   with port_security_enabled=False and with a Floating IP.
+
+.. code-block:: console
+
+ $ openstack network create monitor_net
+ $ openstack subnet create monitor_subnet --subnet-range 192.171.0.0/27 --network monitor_net
+ $ openstack port create vxlan_monitor_port --network monitor_net --disable-port-security --no-security-group
+ $ openstack server create --flavor d1 --image <ubuntu or similar OS to check the mirroring with tcpdump for example> --nic port-id=monitor_port monitor_vm --key-name mykey
+ $ openstack server add floating ip monitor_vm 100.109.0.221
+
+2. Create another Neutron port (the source of the mirroring).
+
+.. code-block:: console
+
+ $ openstack network create mirror_net
+ $ openstack subnet create mirror_subnet --subnet-range 192.170.0.0/27 --network mirror_net
+ $ openstack port create mirror_port --network mirror_net --security-group <pingable and loginable security-group>
+
+3. Boot a VM on the previous port.
+
+.. code-block:: console
+
+ $ openstack server create --security-group <pingable and loginable security-group> --flavor c1 --image cirros-0.6.2-x86_64-disk --nic port-id=mirror_port mirror_vm
+
+4. Create a tap mirror with the source port Id as the port field and
+   the FIP or the IP of the remote host as the remote_ip field of the
+   tap mirror. Make sure that the remote end can be the endpoint of the
+   GRE or ERSPANv1 tunnel.
+
+.. code-block:: console
+
+ $ openstack tap mirror create --port mirror_port --name mirror1 --directions IN=102 --remte-ip 100.109.0.221 --mirror-type erspanv1
