@@ -33,7 +33,7 @@ function configure_taas_plugin {
     neutron_server_config_add $TAAS_PLUGIN_CONF_FILE
     neutron_service_plugin_class_add taas
     if is_service_enabled tap_mirror; then
-      neutron_service_plugin_class_add tapmirror
+        neutron_service_plugin_class_add tapmirror
     fi
     inicomment $TAAS_PLUGIN_CONF_FILE service_providers service_provider
     iniadd $TAAS_PLUGIN_CONF_FILE service_providers service_provider $TAAS_SERVICE_DRIVER

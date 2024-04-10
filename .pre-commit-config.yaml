@@ -15,6 +15,17 @@ repos:
       - id: check-merge-conflict
       - id: debug-statements
       - id: check-yaml
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.3
+    hooks:
+      - id: bandit
+        # E005 file does not begin with #! or have a .sh prefix
+        # E006 check for lines longer than 79 columns
+        # E042 local declaration hides errors
+        # E043 Arithmetic compound has inconsistent return semantics
+        args: ['-n5', '-sE006,E005,E042,E043']
+        files: 'neutron_taas/'
+        exclude: 'neutron_taas/tests'
   - repo: https://github.com/lucas-c/pre-commit-hooks
     rev: v1.5.4
     hooks:
