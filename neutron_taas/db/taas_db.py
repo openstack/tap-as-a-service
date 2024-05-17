@@ -161,8 +161,8 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
             return
 
         ns_data = {
-            'physical_network': ns['physical_network'],
-            'network_type': ns['network_type']
+            'physical_network': ns[1],
+            'network_type': ns[2]
         }
         return ns_data
 

@@ -60,54 +60,54 @@ class TaaSDbTestCase(testlib_api.SqlTestCase):
 
     def _get_tap_service(self, tap_service_id):
         """Helper method to retrieve tap service."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.get_tap_service(self.ctx, tap_service_id)
 
     def _get_tap_services(self):
         """Helper method to retrieve all tap services."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.get_tap_services(self.ctx)
 
     def _create_tap_service(self, tap_service):
         """Helper method to create tap service."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.create_tap_service(self.ctx, tap_service)
 
     def _update_tap_service(self, tap_service_id, tap_service):
         """Helper method to update tap service."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.update_tap_service(self.ctx,
                                                  tap_service_id,
                                                  tap_service)
 
     def _delete_tap_service(self, tap_service_id):
         """Helper method to delete tap service."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.delete_tap_service(self.ctx, tap_service_id)
 
     def _get_tap_flow(self, tap_flow_id):
         """Helper method to retrieve tap flow."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.get_tap_flow(self.ctx, tap_flow_id)
 
     def _get_tap_flows(self):
         """Helper method to retrieve all tap flows."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.get_tap_flows(self.ctx)
 
     def _create_tap_flow(self, tap_flow):
         """Helper method to create tap flow."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.create_tap_flow(self.ctx, tap_flow)
 
     def _update_tap_flow(self, tap_flow_id, tap_flow):
         """Helper method to update tap flow."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.update_tap_flow(self.ctx, tap_flow_id, tap_flow)
 
     def _delete_tap_flow(self, tap_flow_id):
         """Helper method to delete tap flow."""
-        with self.ctx.session.begin(subtransactions=True):
+        with self.ctx.session.begin():
             return self.mixin.delete_tap_flow(self.ctx, tap_flow_id)
 
     def test_tap_service_get(self):
