@@ -4,40 +4,9 @@
       - build-openstack-docs-pti
       - check-requirements
       - openstack-python3-wallaby-jobs-neutron
-      - tap-as-a-service-tempest-plugin-jobs
     check:
       jobs:
-        - tap-as-a-service-tempest
+        - neutron-tempest-plugin-tap-as-a-service
     gate:
       jobs:
-        - tap-as-a-service-tempest
-
-- job:
-    name: tap-as-a-service-tempest
-    parent: devstack-tempest
-    nodeset: openstack-single-node-focal
-    timeout: 10800
-    vars:
-      TAAS_SERVICE_DRIVER: "TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"
-      tox_envlist: all
-      devstack_services:
-        taas: true
-      devstack_plugins:
-        tap-as-a-service: https://opendev.org/openstack/tap-as-a-service
-      tempest_plugins:
-        - tap-as-a-service-tempest-plugin
-      tempest_test_regex: (^tempest|^neutron_taas_tempest_plugin)
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/tap-as-a-service
-      # TODO(lajoskatona): remove this when all tests will be merged to
-      # neutron-tempest-plugin
-      - x/tap-as-a-service-tempest-plugin
-      - openstack/tempest
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron_taas/tests/unit/.*$
-      - ^setup.cfg$
-      - ^specs/.*$
+        - neutron-tempest-plugin-tap-as-a-service
