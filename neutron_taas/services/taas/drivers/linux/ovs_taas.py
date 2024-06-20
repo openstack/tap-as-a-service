@@ -282,8 +282,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
         vif_details = port.get('binding:vif_details')
         is_hybrid_plug = vif_details.get('ovs_hybrid_plug')
 
-        if (is_hybrid_plug or
-                self.datapath_type == n_ovs_consts.OVS_DATAPATH_SYSTEM):
+        if is_hybrid_plug:
             ovs_port_name = ovs_port.port_name
             linux_br_name = ovs_port_name.replace('qvo', 'qbr')
             utils.execute(['ip', 'link', 'set', linux_br_name,
