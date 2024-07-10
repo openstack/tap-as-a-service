@@ -1,3 +1,10 @@
+- job:
+    name: neutron-tempest-plugin-tap-as-a-service-wsgi
+    parent: neutron-tempest-plugin-tap-as-a-service
+    vars:
+      devstack_localrc:
+        NEUTRON_DEPLOY_MOD_WSGI: true
+
 - project:
     templates:
       - openstack-cover-jobs-neutron
@@ -8,6 +15,7 @@
     check:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-wsgi
     gate:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service

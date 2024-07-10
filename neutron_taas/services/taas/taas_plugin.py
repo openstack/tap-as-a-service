@@ -51,12 +51,16 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
 
     def __init__(self):
 
-        LOG.debug("TAAS PLUGIN INITIALIZED")
+        LOG.debug("TAAS PLUGIN INITIALIZATION")
         self.service_type_manager = st_db.ServiceTypeManager.get_instance()
         add_provider_configuration(self.service_type_manager,
                                    taas_consts.TAAS)
         self._load_drivers()
         self.driver = self._get_driver_for_provider(self.default_provider)
+        LOG.info(("TAAS Plugin initialized using service drivers: "
+                  "%(service_drivers)s, default: %(default_driver)s"),
+                 {'service_drivers': self.drivers.keys(),
+                  'default_driver': self.default_provider})
 
     def _load_drivers(self):
         """Loads plugin-drivers specified in configuration."""

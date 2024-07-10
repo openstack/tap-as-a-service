@@ -23,10 +23,9 @@ function install_taas {
 }
 
 function configure_taas_plugin {
-    cp $TAAS_PLUGIN_PATH/etc/taas_plugin.ini $TAAS_PLUGIN_CONF_FILE
-    neutron_server_config_add $TAAS_PLUGIN_CONF_FILE
+    echo "Configuring taas"
     neutron_service_plugin_class_add taas
-    neutron_deploy_rootwrap_filters $TAAS_PLUGIN_PATH
+    iniadd /$Q_PLUGIN_CONF_FILE service_providers service_provider "TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"
 }
 
 if is_service_enabled taas; then
@@ -37,13 +36,13 @@ if is_service_enabled taas; then
             install_taas
         elif [[ "$2" == "post-config" ]]; then
             configure_taas_plugin
-            if is_service_enabled q-svc neutron-api; then
-                neutron-db-manage --subproject tap-as-a-service upgrade head
-            fi
             echo "Configuring taas"
             if [ "$TAAS_SERVICE_DRIVER" ]; then
-                inicomment $TAAS_PLUGIN_CONF_FILE service_providers service_provider
-                iniadd $TAAS_PLUGIN_CONF_FILE service_providers service_provider $TAAS_SERVICE_DRIVER
+                inicomment /$Q_PLUGIN_CONF_FILE service_providers service_provider
+                iniadd /$Q_PLUGIN_CONF_FILE service_providers service_provider $TAAS_SERVICE_DRIVER
+            fi
+            if is_service_enabled q-svc neutron-api; then
+                neutron-db-manage --subproject tap-as-a-service upgrade head
             fi
         elif [[ "$2" == "extra" ]]; then
             :
