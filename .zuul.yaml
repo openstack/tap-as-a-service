@@ -1,6 +1,6 @@
 - job:
-    name: neutron-tempest-plugin-tap-as-a-service-wsgi
-    parent: neutron-tempest-plugin-tap-as-a-service
+    name: neutron-tempest-plugin-tap-as-a-service-wsgi-2024-2
+    parent: neutron-tempest-plugin-tap-as-a-service-2024-2
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
@@ -14,14 +14,14 @@
       - openstack-python3-jobs-neutron
     check:
       jobs:
-        - neutron-tempest-plugin-tap-as-a-service
-        - neutron-tempest-plugin-tap-as-a-service-wsgi
+        - neutron-tempest-plugin-tap-as-a-service-2024-2
+        - neutron-tempest-plugin-tap-as-a-service-wsgi-2024-2
     gate:
       jobs:
-        - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-2024-2
     periodic-weekly:
       jobs:
         - openstack-tox-py39
         - openstack-tox-py312
         - openstack-tox-py39-with-oslo-master
-        - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-2024-2
