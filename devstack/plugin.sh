@@ -19,16 +19,31 @@
 
 
 function install_taas {
-    setup_develop $TAAS_PLUGIN_PATH
+    setup_develop $NEUTRON_TAAS_DIR
+}
+
+function generate_taas_config_files {
+    # Uses oslo config generator to generate TaaS sample configuration files
+    (cd $NEUTRON_TAAS_DIR && exec ./tools/generate_config_file_samples.sh)
 }
 
 function configure_taas_plugin {
     echo "Configuring taas"
+    cp $NEUTRON_TAAS_DIR/etc/taas_plugin.ini.sample $TAAS_PLUGIN_CONF_FILE
+    neutron_server_config_add $TAAS_PLUGIN_CONF_FILE
     neutron_service_plugin_class_add taas
     if is_service_enabled tap_mirror; then
       neutron_service_plugin_class_add tapmirror
     fi
-    iniadd /$Q_PLUGIN_CONF_FILE service_providers service_provider "TAAS:TAAS:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"
+    inicomment $TAAS_PLUGIN_CONF_FILE service_providers service_provider
+    iniadd $TAAS_PLUGIN_CONF_FILE service_providers service_provider $TAAS_SERVICE_DRIVER
+}
+
+function configure_taas_agent {
+    echo "Configuring taas agent"
+    source $NEUTRON_DIR/devstack/lib/l2_agent
+    plugin_agent_add_l2_agent_extension taas
+    configure_l2_agent
 }
 
 if is_service_enabled taas; then
@@ -38,12 +53,8 @@ if is_service_enabled taas; then
         elif [[ "$2" == "install" ]]; then
             install_taas
         elif [[ "$2" == "post-config" ]]; then
+            generate_taas_config_files
             configure_taas_plugin
-            echo "Configuring taas"
-            if [ "$TAAS_SERVICE_DRIVER" ]; then
-                inicomment /$Q_PLUGIN_CONF_FILE service_providers service_provider
-                iniadd /$Q_PLUGIN_CONF_FILE service_providers service_provider $TAAS_SERVICE_DRIVER
-            fi
             if is_service_enabled q-svc neutron-api; then
                 neutron-db-manage --subproject tap-as-a-service upgrade head
             fi
@@ -63,9 +74,7 @@ if is_service_enabled q-agt neutron-agent; then
             install_taas
         elif [[ "$2" == "post-config" ]]; then
             if is_service_enabled q-agt neutron-agent; then
-                source $NEUTRON_DIR/devstack/lib/l2_agent
-                plugin_agent_add_l2_agent_extension taas
-                configure_l2_agent
+                configure_taas_agent
             fi
         elif [[ "$2" == "extra" ]]; then
             :

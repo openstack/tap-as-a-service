@@ -1,3 +1,10 @@
 # Devstack settings
 ABSOLUTE_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
-TAAS_PLUGIN_PATH=$ABSOLUTE_PATH/..
+
+NEUTRON_CONF_DIR=${NEUTRON_CONF_DIR:-"/etc/neutron"}
+NEUTRON_TAAS_DIR=${DEST}/tap-as-a-service
+
+NEUTRON_TAAS_CONF_FILE=neutron_taas.conf
+TAAS_PLUGIN_CONF_FILE=$NEUTRON_CONF_DIR/$NEUTRON_TAAS_CONF_FILE
+
+TAAS_SERVICE_DRIVER=${TAAS_SERVICE_DRIVER:-"TAAS:taas:neutron_taas.services.taas.service_drivers.taas_rpc.TaasRpcDriver:default"}
