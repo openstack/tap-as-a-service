@@ -28,7 +28,7 @@ taas_quota_opts = [
 ]
 
 
-TaasOpts = [
+taas_opts = [
     cfg.IntOpt(
         'vlan_range_start',
         default=3900,
@@ -42,4 +42,4 @@ TaasOpts = [
 
 def register():
     cfg.CONF.register_opts(taas_quota_opts, 'QUOTAS')
-    cfg.CONF.register_opts(TaasOpts, 'taas')
+    cfg.CONF.register_opts(taas_opts, 'taas')
