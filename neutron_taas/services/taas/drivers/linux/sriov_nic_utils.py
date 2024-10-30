@@ -30,7 +30,7 @@ import re
 LOG = logging.getLogger(__name__)
 
 
-class SriovNicUtils(object):
+class SriovNicUtils:
     #
     # Initializes internal state for specified # keys
     #
@@ -169,7 +169,7 @@ class SriovNicUtils(object):
             with open(addr_file, encoding="utf-8") as f:
                 mac = next(f).strip()
                 return mac
-        except (IOError, StopIteration) as e:
+        except (OSError, StopIteration) as e:
             LOG.warning("Could not find the expected sysfs file for "
                         "determining the MAC address of the PCI device "
                         "%(addr)s. May not be a NIC. Error: %(e)s",

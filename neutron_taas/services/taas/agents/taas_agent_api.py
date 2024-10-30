@@ -17,7 +17,7 @@ from neutron_lib import rpc as n_rpc
 import oslo_messaging as messaging
 
 
-class TaasPluginApiMixin(object):
+class TaasPluginApiMixin:
 
     # Currently there are no Calls the Agent makes towards the Plugin.
 
@@ -28,7 +28,7 @@ class TaasPluginApiMixin(object):
         super().__init__()
 
 
-class TaasAgentRpcCallbackMixin(object):
+class TaasAgentRpcCallbackMixin:
     """Mixin for Taas agent Implementations."""
 
     def __init__(self):

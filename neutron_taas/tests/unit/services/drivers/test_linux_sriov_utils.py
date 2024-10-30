@@ -36,7 +36,7 @@ FAKE_SRIOV_PORT = {
 
 class TestSriovNicUtils(base.TaasTestCase):
     def setUp(self):
-        super(TestSriovNicUtils, self).setUp()
+        super().setUp()
 
     def test_get_sysfs_netdev_path_with_pf_interface(self):
         self.assertEqual(

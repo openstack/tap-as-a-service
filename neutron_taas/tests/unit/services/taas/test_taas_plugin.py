@@ -40,7 +40,7 @@ class DummyError(Exception):
 
 class TestTaasPlugin(testlib_api.SqlTestCase):
     def setUp(self):
-        super(TestTaasPlugin, self).setUp()
+        super().setUp()
         mock.patch.object(n_rpc, 'Connection', spec=object).start()
         mock.patch.object(taas_agent_api,
                           'TaasAgentApi', spec=object).start()
@@ -162,8 +162,8 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                 self._context, ts_id_1)
             tap_id_assoc_2 = self._plugin.create_tap_id_association(
                 self._context, ts_id_2)
-            self.assertEqual(set([1, 2]), set([tap_id_assoc_1['taas_id'],
-                             tap_id_assoc_2['taas_id']]))
+            self.assertEqual({1, 2}, {tap_id_assoc_1['taas_id'],
+                             tap_id_assoc_2['taas_id']})
             with testtools.ExpectedException(taas_exc.TapServiceLimitReached):
                 self._plugin.create_tap_id_association(
                     self._context,
@@ -177,8 +177,8 @@ class TestTaasPlugin(testlib_api.SqlTestCase):
                                                  "dummyHost")
             tap_id_assoc_3 = self._plugin.create_tap_id_association(
                 self._context, ts_id_3)
-            self.assertEqual(set([1, 2]), set([tap_id_assoc_3['taas_id'],
-                             tap_id_assoc_2['taas_id']]))
+            self.assertEqual({1, 2}, {tap_id_assoc_3['taas_id'],
+                             tap_id_assoc_2['taas_id']})
 
     def test_create_tap_service_wrong_tenant_id(self):
         self._port_details['tenant_id'] = 'other-tenant'

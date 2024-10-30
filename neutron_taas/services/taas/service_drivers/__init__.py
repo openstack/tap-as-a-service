@@ -15,7 +15,7 @@
 import abc
 
 
-class TaasBaseDriver(object, metaclass=abc.ABCMeta):
+class TaasBaseDriver(metaclass=abc.ABCMeta):
 
     def __init__(self, service_plugin):
         self.service_plugin = service_plugin

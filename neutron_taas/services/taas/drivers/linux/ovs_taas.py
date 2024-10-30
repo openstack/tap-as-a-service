@@ -401,7 +401,7 @@ class OvsTaasDriver(taas_base.TaasAgentDriver):
                 )
 
             else:
-                actions = "output:%s,mod_vlan_vid:%s,output:%s" % (
+                actions = "output:{},mod_vlan_vid:{},output:{}".format(
                     str(ovs_port_id), str(taas_id), str(patch_int_tap_id)
                 )
                 if network_type == 'vlan':

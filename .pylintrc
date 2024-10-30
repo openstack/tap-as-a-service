@@ -32,7 +32,6 @@ disable=
  global-statement,
  keyword-arg-before-vararg,
  literal-comparison,
- non-parent-init-called,
  not-callable,
  protected-access,
  raise-missing-from,
@@ -80,7 +79,6 @@ disable=
 # new for python3 version of pylint
  consider-using-set-comprehension,
  unnecessary-pass,
- useless-object-inheritance
 
 [BASIC]
 # Variable names can be 1 to 31 characters long, with lowercase and underscores

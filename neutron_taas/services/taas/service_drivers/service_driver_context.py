@@ -19,7 +19,7 @@ from oslo_log import log
 LOG = log.getLogger(__name__)
 
 
-class ServiceDriverContext(object):
+class ServiceDriverContext:
     """ServiceDriverContext context base class"""
     def __init__(self, service_plugin, plugin_context):
         self._plugin = service_plugin

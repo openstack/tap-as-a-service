@@ -34,7 +34,7 @@ OPTS = [
 cfg.CONF.register_opts(OPTS)
 
 
-class TaasAgentDriver(object, metaclass=abc.ABCMeta):
+class TaasAgentDriver(metaclass=abc.ABCMeta):
     """Defines stable abstract interface for TaaS Agent Driver."""
 
     @abc.abstractmethod

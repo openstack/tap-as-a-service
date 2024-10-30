@@ -17,7 +17,7 @@ import copy
 from oslo_utils import uuidutils
 
 
-class FakeTapService(object):
+class FakeTapService:
 
     @staticmethod
     def create_tap_service(attrs=None):
@@ -48,7 +48,7 @@ class FakeTapService(object):
         return tap_services
 
 
-class FakeTapFlow(object):
+class FakeTapFlow:
 
     @staticmethod
     def create_tap_flow(attrs=None):

@@ -38,12 +38,12 @@ class TaasExtensionTestCase(test_extensions_base.ExtensionTestCase):
     def setUp(self):
         conf_common.register_core_common_config_opts()
         extensions.append_api_extensions_path(taas_extensions.__path__)
-        super(TaasExtensionTestCase, self).setUp()
+        super().setUp()
         plural_mappings = {'tap_service': 'tap_services',
                            'tap_flow': 'tap_flows'}
         self.setup_extension(
-            '%s.%s' % (taas_extensions.taas.TaasPluginBase.__module__,
-                       taas_extensions.taas.TaasPluginBase.__name__),
+            '{}.{}'.format(taas_extensions.taas.TaasPluginBase.__module__,
+                           taas_extensions.taas.TaasPluginBase.__name__),
             taas_api.ALIAS,
             taas_extensions.taas.Taas,
             'taas',

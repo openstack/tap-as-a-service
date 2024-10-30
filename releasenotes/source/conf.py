@@ -59,9 +59,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'tap-as-a-service'
-copyright = u'2017, Tap-as-a-service developers'
-author = u'Tap-as-a-service developers'
+project = 'tap-as-a-service'
+copyright = '2017, Tap-as-a-service developers'
+author = 'Tap-as-a-service developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -247,8 +247,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'tap-as-a-service.tex', u'tap-as-a-service Documentation',
-     u'OpenStack', 'manual'),
+    (master_doc, 'tap-as-a-service.tex', 'tap-as-a-service Documentation',
+     'OpenStack', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -277,7 +277,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'tap-as-a-service', u'tap-as-a-service Documentation',
+    (master_doc, 'tap-as-a-service', 'tap-as-a-service Documentation',
      [author], 1)
 ]
 
@@ -291,7 +291,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'tap-as-a-service', u'tap-as-a-service Documentation',
+    (master_doc, 'tap-as-a-service', 'tap-as-a-service Documentation',
      author, 'tap-as-a-service', 'One line description of project.',
      'Miscellaneous'),
 ]

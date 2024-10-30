@@ -33,7 +33,7 @@ class TaaSDbTestCase(testlib_api.SqlTestCase):
     """Unit test for TaaS DB support."""
 
     def setUp(self):
-        super(TaaSDbTestCase, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self.mixin = taas_db.Taas_db_Mixin()
         self.plugin = importutils.import_object(DB_PLUGIN_KLAAS)

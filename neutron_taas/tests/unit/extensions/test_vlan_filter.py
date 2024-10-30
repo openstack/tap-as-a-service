@@ -34,14 +34,13 @@ _get_path = test_api_v2._get_path
 class VlanFilterExtensionTestCase(test_taas_ext.TaasExtensionTestCase):
 
     def setUp(self):
-        super(VlanFilterExtensionTestCase, self).setUp()
+        super().setUp()
         attr_map = taas_api_def.RESOURCE_ATTRIBUTE_MAP
         attr_map['tap_flows'].update(
             vlan_filter_ext.RESOURCE_ATTRIBUTE_MAP['tap_flows'])
 
     def _get_expected_tap_flow(self, data):
-        ret = super(VlanFilterExtensionTestCase,
-                    self)._get_expected_tap_flow(data)
+        ret = super()._get_expected_tap_flow(data)
         ret['tap_flow'].update(
             vlan_filter=data['tap_flow'].get('vlan_filter', None))
         return ret

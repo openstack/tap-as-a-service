@@ -54,7 +54,7 @@ class TestCreateTapFlow(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestCreateTapFlow, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_flow.CreateTapFlow(self.app, self.namespace)
 
     def test_create_tap_flow(self):
@@ -117,7 +117,7 @@ class TestCreateTapFlow(test_fakes.TestNeutronClientOSCV2):
 
 class TestListTapFlow(test_fakes.TestNeutronClientOSCV2):
     def setUp(self):
-        super(TestListTapFlow, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_flow.ListTapFlow(self.app, self.namespace)
 
     def test_list_tap_flows(self):
@@ -149,7 +149,7 @@ class TestListTapFlow(test_fakes.TestNeutronClientOSCV2):
 
 class TestDeleteTapFlow(test_fakes.TestNeutronClientOSCV2):
     def setUp(self):
-        super(TestDeleteTapFlow, self).setUp()
+        super().setUp()
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_flow = mock.Mock(
             side_effect=lambda name_or_id, ignore_missing:
@@ -194,7 +194,7 @@ class TestShowTapFlow(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestShowTapFlow, self).setUp()
+        super().setUp()
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_flow = mock.Mock(
             side_effect=lambda name_or_id, ignore_missing:
@@ -246,7 +246,7 @@ class TestUpdateTapFlow(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestUpdateTapFlow, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_flow.UpdateTapFlow(self.app, self.namespace)
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_flow = mock.Mock(

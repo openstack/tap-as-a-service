@@ -22,7 +22,7 @@
 # - A value may be affiliated with multiple keys.
 # - A value may be affiliated with a key multiple times.
 #
-class key_value_mgr(object):
+class key_value_mgr:
     #
     # Initializes internal state for specified # keys
     #

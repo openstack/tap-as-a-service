@@ -36,7 +36,7 @@ from oslo_utils import excutils
 LOG = logging.getLogger(__name__)
 
 
-class TaasCallbacks(object):
+class TaasCallbacks:
 
     def __init__(self, rpc_driver, plugin):
         super().__init__()

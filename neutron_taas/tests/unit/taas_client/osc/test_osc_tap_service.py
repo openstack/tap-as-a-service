@@ -51,7 +51,7 @@ class TestCreateTapService(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestCreateTapService, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_service.CreateTapService(self.app, self.namespace)
 
     def test_create_tap_service(self):
@@ -95,7 +95,7 @@ class TestCreateTapService(test_fakes.TestNeutronClientOSCV2):
 
 class TestListTapService(test_fakes.TestNeutronClientOSCV2):
     def setUp(self):
-        super(TestListTapService, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_service.ListTapService(self.app, self.namespace)
 
     def test_list_tap_service(self):
@@ -125,7 +125,7 @@ class TestListTapService(test_fakes.TestNeutronClientOSCV2):
 
 class TestDeleteTapService(test_fakes.TestNeutronClientOSCV2):
     def setUp(self):
-        super(TestDeleteTapService, self).setUp()
+        super().setUp()
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_service = mock.Mock(
             side_effect=lambda name_or_id, ignore_missing:
@@ -164,7 +164,7 @@ class TestShowTapService(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestShowTapService, self).setUp()
+        super().setUp()
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_service = mock.Mock(
             side_effect=lambda name_or_id, ignore_missing:
@@ -212,7 +212,7 @@ class TestUpdateTapService(test_fakes.TestNeutronClientOSCV2):
     )
 
     def setUp(self):
-        super(TestUpdateTapService, self).setUp()
+        super().setUp()
         self.cmd = osc_tap_service.UpdateTapService(self.app, self.namespace)
         self.app.client_manager.network = mock.Mock()
         self.app.client_manager.network.find_tap_service = mock.Mock(

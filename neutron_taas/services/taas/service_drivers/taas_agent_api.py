@@ -21,7 +21,7 @@ import oslo_messaging as messaging
 LOG = logging.getLogger(__name__)
 
 
-class TaasAgentApi(object):
+class TaasAgentApi:
     """RPC calls to agent APIs"""
 
     def __init__(self, topic, host):

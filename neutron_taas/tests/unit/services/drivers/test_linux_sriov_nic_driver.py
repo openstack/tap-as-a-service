@@ -39,7 +39,7 @@ FAKE_TAP_FLOW = {'port': FAKE_TAP_SERVICE['port'],
 
 class TestSriovNicTaas(base.TaasTestCase):
     def setUp(self):
-        super(TestSriovNicTaas, self).setUp()
+        super().setUp()
 
     @mock.patch.object(sriov_nic_taas, 'sriov_utils')
     def test_create_tap_service(self, mock_sriov_utils):
