@@ -27,7 +27,9 @@ EXTERNAL_TABLES = set(external.TABLES)
 VERSION_TABLE = 'taas_alembic_version'
 
 
-class _TestModelsMigrationsTAAS(test_migrations._TestModelsMigrations):
+class TestModelsMigrationsTAAS(test_migrations.TestModelsMigrations,
+                               testlib_api.MySQLTestCaseMixin,
+                               testlib_api.SqlTestCaseLight):
 
     def db_sync(self, engine):
         cfg.CONF.set_override(
@@ -50,15 +52,3 @@ class _TestModelsMigrationsTAAS(test_migrations._TestModelsMigrations):
         if type_ == 'index' and reflected and name.startswith("idx_autoinc_"):
             return False
         return True
-
-
-class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
-                                _TestModelsMigrationsTAAS,
-                                testlib_api.SqlTestCaseLight):
-    pass
-
-
-class TestModelsMigrationsPostgresql(testlib_api.PostgreSQLTestCaseMixin,
-                                     _TestModelsMigrationsTAAS,
-                                     testlib_api.SqlTestCaseLight):
-    pass
