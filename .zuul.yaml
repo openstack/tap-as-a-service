@@ -6,12 +6,12 @@
       - openstack-python3-jobs-neutron
     check:
       jobs:
-        - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-2023-2
     gate:
       jobs:
-        - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-2023-2
     periodic-weekly:
       jobs:
         - openstack-tox-py39
         - openstack-tox-py39-with-oslo-master
-        - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-2023-2
