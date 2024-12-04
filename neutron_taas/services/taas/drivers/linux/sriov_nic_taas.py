@@ -263,6 +263,7 @@ class SriovNicTaasDriver(taas_base.TaasAgentDriver):
         ts_port = tap_flow_msg['tap_service_port']
         vlan_filter = tap_flow_msg['tap_flow']['vlan_filter']
         direction = tap_flow_msg['tap_flow']['direction']
+        vf_to_vf_all_vlans = False
 
         LOG.debug("SRIOV Driver: Inside delete_tap_flow: "
                   "SRC Port-id: %(src_port_id)s, "

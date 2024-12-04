@@ -126,6 +126,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         LOG.debug("Invoking Driver for %(func_name)s from agent",
                   {'func_name': func_name})
 
+        status_msg = {}
         if func_name != 'periodic_tasks':
             func_dict = self.func_dict[func_name]
             status_msg = {'id': args[func_dict['msg_name']]['id']}
