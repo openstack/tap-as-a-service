@@ -116,30 +116,3 @@ and tap-as-a-service has an extension for taas related commands.
 
 * Update tap flow **openstack tap flow update** <tap flow id/tap flow name> --name <new name of the tap flow> --description <new description of the tap flow>
 
-Workflow
-=========
-
-In this section we describe a simple sequence of steps to use TaaS.
-
-Workflow Sequence
-------------------
-
-1. Create a Neutron port with 'port_security_enabled' set to 'false'.
-
-2. Launch a VM (VM on which you want to monitor/receive the mirrored data).
-   Associate the Neutron port created in step 1 while creating the VM.
-
-3. Using Neutron Client command for TaaS **neutron tap-service-create** or
-   via REST APIs create a Tap Service instance by associating the port
-   created in step 1.
-
-4. Using Neutron Client command for TaaS **neutron tap-flow-create** or
-   via REST APIs create a Tap Flow instance by associating the Tap Service
-   instance created in step 3 and the target Neutron port from which you want
-   to mirror traffic (assuming the Neutron port from which the traffic
-   needs to be monitored already exists.)
-   Mirroring can be done for both incoming and/or outgoing traffic from the
-   target Neutron port.
-
-5. Observe the mirrored traffic on the monitoring VM by running tools such as
-   tcpdump.
