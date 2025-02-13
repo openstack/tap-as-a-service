@@ -13,6 +13,7 @@
 import itertools
 
 from neutron_taas.policies import tap_flow
+from neutron_taas.policies import tap_mirror
 from neutron_taas.policies import tap_service
 
 
@@ -20,4 +21,5 @@ def list_rules():
     return itertools.chain(
         tap_flow.list_rules(),
         tap_service.list_rules(),
+        tap_mirror.list_rules(),
     )
