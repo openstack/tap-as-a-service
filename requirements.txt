@@ -1,5 +1,4 @@
 pbr>=5.5.0 # Apache-2.0
-Babel>=2.8.0 # BSD
 neutron>=16.0.0.0b1  # Apache-2.0
 neutron-lib>=2.11.0 # Apache-2.0
 openstacksdk>=0.102.0 # Apache-2.0
