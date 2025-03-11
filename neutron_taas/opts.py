@@ -10,18 +10,22 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+import neutron.services.provider_configuration
+
 import neutron_taas.common.config
-import neutron_taas.services.taas.agents.extensions
+import neutron_taas.services.taas.agents.extensions.taas
 
 
 def list_agent_opts():
     return [
-        ('DEFAULT', neutron_taas.services.taas.agents.extensions.OPTS)
+        ('DEFAULT', neutron_taas.services.taas.agents.extensions.taas.OPTS)
     ]
 
 
 def list_opts():
     return [
+        ('service_providers',
+         neutron.services.provider_configuration.serviceprovider_opts),
         ('quotas', neutron_taas.common.config.taas_quota_opts),
         ('taas', neutron_taas.common.config.taas_opts)
     ]
