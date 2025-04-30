@@ -12,52 +12,85 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
 from neutron_lib.policy import RULE_ADMIN_OR_OWNER
+
+
+COLLECTION_PATH = '/taas/tap_services'
+RESOURCE_PATH = '/taas/tap_services/{id}'
+
+DEPRECATED_REASON = """
+The neutron TAAS API now supports Secure RBAC default roles.
+"""
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_tap_service',
-        RULE_ADMIN_OR_OWNER,
-        'Create a tap service',
-        [
+        name='create_tap_service',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create a tap service',
+        operations=[
             {
                 'method': 'POST',
-                'path': '/taas/tap_services',
+                'path': COLLECTION_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_tap_service',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'update_tap_service',
-        RULE_ADMIN_OR_OWNER,
-        'Updates a tap service',
-        [
+        name='update_tap_service',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Updates a tap service',
+        operations=[
             {
                 'method': 'PUT',
-                'path': '/taas/tap_services/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_tap_service',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'get_tap_service',
-        RULE_ADMIN_OR_OWNER,
-        'Show a tap service',
-        [
+        name='get_tap_service',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Show a tap service',
+        operations=[
             {
                 'method': 'GET',
-                'path': '/taas/tap_services/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_tap_service',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'delete_tap_service',
-        RULE_ADMIN_OR_OWNER,
-        'Delete a tap service',
-        [
+        name='delete_tap_service',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete a tap service',
+        operations=[
             {
                 'method': 'DELETE',
-                'path': '/taas/tap_services/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_tap_service',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
 ]
 

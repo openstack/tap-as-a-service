@@ -12,52 +12,85 @@
 
 from oslo_policy import policy
 
+from neutron.conf.policies import base
 from neutron_lib.policy import RULE_ADMIN_OR_OWNER
+
+
+COLLECTION_PATH = '/taas/tap_flows'
+RESOURCE_PATH = '/taas/tap_flows/{id}'
+
+DEPRECATED_REASON = """
+The neutron TAAS API now supports Secure RBAC default roles.
+"""
 
 rules = [
     policy.DocumentedRuleDefault(
-        'create_tap_flow',
-        RULE_ADMIN_OR_OWNER,
-        'Create a tap flow',
-        [
+        name='create_tap_flow',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create a tap flow',
+        operations=[
             {
                 'method': 'POST',
-                'path': '/taas/tap_flows',
+                'path': COLLECTION_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_tap_flow',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'update_tap_flow',
-        RULE_ADMIN_OR_OWNER,
-        'Update a tap flow',
-        [
+        name='update_tap_flow',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update a tap flow',
+        operations=[
             {
                 'method': 'PUT',
-                'path': '/taas/tap_flows/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_tap_flow',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'get_tap_flow',
-        RULE_ADMIN_OR_OWNER,
-        'Show a tap flow',
-        [
+        name='get_tap_flow',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Show a tap flow',
+        operations=[
             {
                 'method': 'GET',
-                'path': '/taas/tap_flows/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_tap_flow',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
     policy.DocumentedRuleDefault(
-        'delete_tap_flow',
-        RULE_ADMIN_OR_OWNER,
-        'Delete a tap flow',
-        [
+        name='delete_tap_flow',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete a tap flow',
+        operations=[
             {
                 'method': 'DELETE',
-                'path': '/taas/tap_flows/{id}',
+                'path': RESOURCE_PATH,
             }
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_tap_flow',
+            check_str=RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since='2025.2')
     ),
 ]
 
