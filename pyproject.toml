@@ -2,3 +2,7 @@
 requires = ["pbr>=5.7.0", "setuptools>=64.0.0", "wheel"]
 build-backend = "pbr.build"
 
+[tool.bandit]
+exclude_dirs = ['neutron_taas/tests']
+# B110 Try, Except, Pass detected
+skips = ['B110']
