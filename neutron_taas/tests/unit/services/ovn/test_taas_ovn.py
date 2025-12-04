@@ -33,13 +33,24 @@ class TestTaasOvnDriver(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        ovn_nb_idl = mock.patch(
+            'neutron_taas.services.taas.service_drivers.ovn.ovsdb.'
+            'impl_idl_taas.OvnNbIdlForTaas')
+        self.mock_ovn_nb_idl = ovn_nb_idl.start()
+        self.addCleanup(ovn_nb_idl.stop)
+
+        mock_thread = mock.patch(
+            'neutron_taas.services.taas.service_drivers.ovn.helper.'
+            'threading.Thread')
+        self.mock_thread_class = mock_thread.start()
+        self.addCleanup(mock_thread.stop)
+
         self.driver = taas_ovn.TaasOvnDriver('tapmirror')
+
         add_req_thread = mock.patch.object(helper.TaasOvnProviderHelper,
                                            'add_request')
         self.mock_add_request = add_req_thread.start()
-        helper_mock = mock.patch.object(helper.TaasOvnProviderHelper,
-                                        'shutdown')
-        helper_mock.start()
+        self.addCleanup(add_req_thread.stop)
 
         self.tap_mirror_dict = {
             'mirror_type': 'gre',

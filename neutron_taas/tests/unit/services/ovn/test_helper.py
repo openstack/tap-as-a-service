@@ -30,6 +30,14 @@ class TestTaasOvnProviderHelper(base.BaseTestCase):
             'neutron_taas.services.taas.service_drivers.ovn.ovsdb.'
             'impl_idl_taas.OvnNbIdlForTaas')
         self.mock_ovn_nb_idl = ovn_nb_idl.start()
+        self.addCleanup(ovn_nb_idl.stop)
+
+        mock_thread = mock.patch(
+            'neutron_taas.services.taas.service_drivers.ovn.helper.'
+            'threading.Thread')
+        self.mock_thread_class = mock_thread.start()
+        self.addCleanup(mock_thread.stop)
+
         mock.patch(
             'ovsdbapp.backend.ovs_idl.idlutils.get_schema_helper').start()
         self.helper = helper.TaasOvnProviderHelper()
@@ -38,9 +46,12 @@ class TestTaasOvnProviderHelper(base.BaseTestCase):
 
         self.ovn_nbdb_api = mock.patch.object(self.helper, 'ovn_nbdb_api')
         self.ovn_nbdb_api.start()
+        self.addCleanup(self.ovn_nbdb_api.stop)
+
         add_req_thread = mock.patch.object(helper.TaasOvnProviderHelper,
                                            'add_request')
         self.mock_add_request = add_req_thread.start()
+        self.addCleanup(add_req_thread.stop)
 
     def test_mirror_add(self):
         port_id = '1234'

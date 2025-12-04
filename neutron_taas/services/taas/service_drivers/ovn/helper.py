@@ -92,8 +92,10 @@ class TaasOvnProviderHelper():
     def shutdown(self):
         self._requests.put({'type': 'exit'})
         self._helper_thread.join()
-        self.ovn_nbdb.stop()
-        del self.ovn_nbdb_api
+        if hasattr(self, 'ovn_nbdb'):
+            self.ovn_nbdb.stop()
+        if hasattr(self, 'ovn_nbdb_api'):
+            del self.ovn_nbdb_api
 
     def add_request(self, req):
         self._requests.put(req)
