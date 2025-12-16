@@ -27,6 +27,7 @@ from oslo_utils import excutils
 
 from neutron_taas.common import constants as taas_consts
 from neutron_taas.db import tap_mirror_db
+from neutron_taas.extensions import tap_mirror_both_direction as t_m_b_api_def
 from neutron_taas.services.taas.service_drivers import (service_driver_context
                                                         as sd_context)
 
@@ -36,7 +37,10 @@ LOG = logging.getLogger(__name__)
 @registry.has_registry_receivers
 class TapMirrorPlugin(tap_mirror_db.Taas_mirror_db_mixin):
 
-    supported_extension_aliases = [t_m_api_def.ALIAS]
+    supported_extension_aliases = [t_m_api_def.ALIAS,
+                                   t_m_b_api_def.ALIAS,
+                                   ]
+
     path_prefix = "/taas"
 
     def __init__(self):

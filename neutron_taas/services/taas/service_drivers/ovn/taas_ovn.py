@@ -80,7 +80,8 @@ class TaasOvnDriver(service_drivers.TaasBaseDriver):
         for direction, tunnel_id in directions.items():
             mirror_port_name = 'tm_%s_%s' % (direction.lower(), t_m['id'][0:6])
             ovn_direction = ('from-lport' if direction == 'OUT'
-                             else 'to-lport')
+                             else 'to-lport' if direction == 'IN'
+                             else 'both')
             request = {'type': 'mirror_add',
                        'info': {'name': mirror_port_name,
                                 'direction_filter': ovn_direction,

@@ -60,7 +60,9 @@ class TestTaasOvnDriver(base.BaseTestCase):
             'port_id': uuidutils.generate_uuid()
         }
         self.multi_dir_t_mirror = copy.deepcopy(self.tap_mirror_dict)
-        self.multi_dir_t_mirror['directions'] = {'IN': 101, 'OUT': 102}
+        self.multi_dir_t_mirror['directions'] = {'IN': 101,
+                                                 'OUT': 102,
+                                                 'BOTH': 103}
 
     def test_create_tap_mirror_postcommit(self):
         ctx = FakeMirrorContext(self.tap_mirror_dict)
@@ -98,9 +100,14 @@ class TestTaasOvnDriver(base.BaseTestCase):
         out_dir_tun_id = self.multi_dir_t_mirror['directions']['OUT']
         expected_out_call['info']['index'] = out_dir_tun_id
 
+        expected_both_call = copy.deepcopy(expected_in_call)
+        expected_both_call['info']['direction_filter'] = 'both'
+        both_dir_tun_id = self.multi_dir_t_mirror['directions']['BOTH']
+        expected_both_call['info']['index'] = both_dir_tun_id
         expected_calls = [
             mock.call(expected_in_call),
-            mock.call(expected_out_call)
+            mock.call(expected_out_call),
+            mock.call(expected_both_call)
         ]
 
         self.mock_add_request.assert_has_calls(expected_calls)
