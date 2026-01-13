@@ -15,10 +15,11 @@
     check:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service
-        - neutron-tempest-plugin-tap-as-a-service-wsgi
+        - neutron-tempest-plugin-tap-as-a-service-ovn
     gate:
       jobs:
         - neutron-tempest-plugin-tap-as-a-service
+        - neutron-tempest-plugin-tap-as-a-service-ovn
     periodic-weekly:
       jobs:
         - openstack-tox-py310
