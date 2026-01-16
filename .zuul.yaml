@@ -23,6 +23,6 @@
     periodic-weekly:
       jobs:
         - openstack-tox-py310
-        - openstack-tox-py312
-        - openstack-tox-py312-with-oslo-master
+        - openstack-tox-py313
+        - openstack-tox-py313-with-oslo-master
         - neutron-tempest-plugin-tap-as-a-service
