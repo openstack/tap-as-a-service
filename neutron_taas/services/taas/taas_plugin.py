@@ -31,7 +31,6 @@ from neutron_taas.services.taas.service_drivers import (service_driver_context
                                                         as sd_context)
 
 from oslo_log import log as logging
-from oslo_utils import excutils
 
 LOG = logging.getLogger(__name__)
 
@@ -101,13 +100,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         driver_context = sd_context.TapServiceContext(self, context, ts)
         self.driver.create_tap_service_precommit(driver_context)
 
-        try:
-            self.driver.create_tap_service_postcommit(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.error("Failed to create tap service on driver,"
-                          "deleting tap_service %s", ts['id'])
-                super().delete_tap_service(context, ts['id'])
+        self.driver.create_tap_service_postcommit(driver_context)
 
         return ts
 
@@ -135,12 +128,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             super().delete_tap_service(context, id)
             method = self.driver.delete_tap_service_postcommit
 
-        try:
-            method(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.error("Failed to delete tap service on driver. "
-                          "tap_sevice: %s", id)
+        method(driver_context)
 
     @db_api.CONTEXT_WRITER
     def create_tap_flow(self, context, tap_flow):
@@ -163,14 +151,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
         driver_context = sd_context.TapFlowContext(self, context, tf)
         self.driver.create_tap_flow_precommit(driver_context)
 
-        try:
-            self.driver.create_tap_flow_postcommit(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.error("Failed to create tap flow on driver,"
-                          "deleting tap_flow %s", tf['id'])
-                super().delete_tap_flow(context, tf['id'])
-
+        self.driver.create_tap_flow_postcommit(driver_context)
         return tf
 
     @db_api.CONTEXT_WRITER
@@ -187,12 +168,7 @@ class TaasPlugin(taas_db.Taas_db_Mixin):
             super().delete_tap_flow(context, id)
             method = self.driver.delete_tap_flow_postcommit
 
-        try:
-            method(driver_context)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.error("Failed to delete tap flow on driver. "
-                          "tap_flow: %s", id)
+        method(driver_context)
 
     @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
     def handle_delete_port(self, resource, event, trigger, payload):
