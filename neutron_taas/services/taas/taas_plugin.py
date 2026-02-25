@@ -39,7 +39,7 @@ LOG = logging.getLogger(__name__)
 def add_provider_configuration(type_manager, service_type):
     type_manager.add_provider_configuration(
         service_type,
-        pconf.ProviderConfiguration('neutron_taas'))
+        pconf.ProviderConfiguration('neutron_taas', service_type))
 
 
 @registry.has_registry_receivers
