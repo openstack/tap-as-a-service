@@ -44,7 +44,7 @@ class TapMirrorPlugin(tap_mirror_db.Taas_mirror_db_mixin):
         self.service_type_manager = st_db.ServiceTypeManager.get_instance()
         self.service_type_manager.add_provider_configuration(
             taas_consts.TAAS,
-            pconf.ProviderConfiguration('neutron_taas'))
+            pconf.ProviderConfiguration('neutron_taas', taas_consts.TAAS))
 
         # Load the service driver from neutron.conf.
         self.drivers, self.default_provider = service_base.load_drivers(
