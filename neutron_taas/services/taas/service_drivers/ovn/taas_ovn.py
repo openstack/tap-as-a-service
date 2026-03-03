@@ -24,6 +24,7 @@ LOG = logging.getLogger(__name__)
 class TaasOvnDriver(service_drivers.TaasBaseDriver):
     """Taas OVN Service Driver class"""
 
+    driver_name = "TaaS OVN Driver"
     more_supported_extension_aliases = [tap_m_api_def.ALIAS]
 
     def __init__(self, service_plugin):
@@ -36,36 +37,43 @@ class TaasOvnDriver(service_drivers.TaasBaseDriver):
 
     @log_helpers.log_method_call
     def create_tap_service_precommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Create tap service is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def create_tap_service_postcommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Create tap service is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def delete_tap_service_precommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Delete tap service is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def delete_tap_service_postcommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Delete tap service is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def create_tap_flow_precommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Create tap flow is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def create_tap_flow_postcommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Create tap flow is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def delete_tap_flow_precommit(self, context):
-        """Send tap flow deletion RPC message to agent."""
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Delete tap flow is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def delete_tap_flow_postcommit(self, context):
-        LOG.warning("Not implemented")
+        raise NotImplementedError(
+            f"Delete tap flow is not supported by {self.driver_name}.")
 
     @log_helpers.log_method_call
     def create_tap_mirror_precommit(self, context):
