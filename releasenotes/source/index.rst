@@ -6,6 +6,7 @@ Tap-as-a-service Release Notes
    :maxdepth: 1
 
    unreleased
+   2026.1
    2025.2
    2025.1
    2024.2
