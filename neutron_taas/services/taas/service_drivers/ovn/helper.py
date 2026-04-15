@@ -106,9 +106,18 @@ class TaasOvnProviderHelper():
         ovn_port = self.ovn_nbdb_api.lookup('Logical_Switch_Port', port_id)
         mirror = self.ovn_nbdb_api.mirror_get(
             request['name']).execute(check_error=True)
-        self.ovn_nbdb_api.lsp_detach_mirror(
-            ovn_port.name, mirror.uuid,
-            if_exist=True).execute(check_error=True)
+        try:
+            # pylint: disable=unexpected-keyword-arg
+            self.ovn_nbdb_api.lsp_detach_mirror(
+                ovn_port.name, mirror.uuid,
+                if_exists=True).execute(check_error=True)
+        except TypeError:
+            # Remove when ovsdbapp>2.17.0, the method will use ``if_exists``
+            # instead of ``if_exist``.
+            # pylint: disable=unexpected-keyword-arg
+            self.ovn_nbdb_api.lsp_detach_mirror(
+                ovn_port.name, mirror.uuid,
+                if_exist=True).execute(check_error=True)
         self.ovn_nbdb_api.mirror_del(
             mirror.uuid).execute(check_error=True)
 
