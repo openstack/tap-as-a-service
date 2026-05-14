@@ -25,9 +25,9 @@ extensions = [
 ]
 
 # openstackdocstheme options
-repository_name = 'openstack/tap-as-a-service'
-bug_project = 'tap-as-a-service'
-bug_tag = ''
+openstackdocs_repo_name = 'openstack/tap-as-a-service'
+openstackdocs_bug_project = 'tap-as-a-service'
+openstackdocs_bug_tag = ''
 html_theme = 'openstackdocs'
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
