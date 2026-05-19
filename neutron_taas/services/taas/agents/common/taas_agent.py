@@ -146,11 +146,11 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         status_msg = {}
         if func_name != 'periodic_tasks':
             func_dict = self.func_dict[func_name]
-            status_msg = {'id': args[func_dict['msg_name']]['id']}
+            status_msg = {'id': args[0][func_dict['msg_name']]['id']}
 
         try:
             driver_func = getattr(self.taas_driver, func_name)
-            driver_func(args)
+            driver_func(*args)
         except Exception:
             LOG.error("Failed to invoke the driver")
             rpc_func = getattr(
@@ -181,7 +181,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_service_msg,
+            [tap_service_msg],
             'create_tap_service')
 
     def create_tap_flow(self, context, tap_flow_msg, host):
@@ -195,7 +195,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_flow_msg,
+            [tap_flow_msg],
             'create_tap_flow')
 
     def delete_tap_service(self, context, tap_service_msg, host):
@@ -213,7 +213,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_service_msg,
+            [tap_service_msg],
             'delete_tap_service')
 
     def delete_tap_flow(self, context, tap_flow_msg, host):
@@ -227,7 +227,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_flow_msg,
+            [tap_flow_msg],
             'delete_tap_flow')
 
     @log_helpers.log_method_call
@@ -244,7 +244,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_mirror_msg,
+            [tap_mirror_msg],
             'create_tap_mirror')
 
     @log_helpers.log_method_call
@@ -261,7 +261,7 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
 
         return self._invoke_driver_for_plugin_api(
             context,
-            tap_mirror_msg,
+            [tap_mirror_msg],
             'delete_tap_mirror')
 
     def _taas_rpc_setup(self):
@@ -274,10 +274,10 @@ class TaasAgentRpcCallback(api.TaasAgentRpcCallbackMixin):
         conn.create_consumer(topics.TAAS_AGENT, endpoints, fanout=False)
         conn.consume_in_threads()
 
-    def periodic_tasks(self):
+    def periodic_tasks(self, context=None):
         return self._invoke_driver_for_plugin_api(
-            context=None,
-            args=None,
+            context=context,
+            args=[],
             func_name='periodic_tasks')
 
     def get_driver_type(self):
