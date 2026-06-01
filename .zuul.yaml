@@ -15,7 +15,7 @@
         - neutron-tempest-plugin-tap-as-a-service-ovn
     periodic-weekly:
       jobs:
-        - openstack-tox-py310
+        - openstack-tox-py311
         - openstack-tox-py313
         - openstack-tox-py313-with-oslo-master
         - neutron-tempest-plugin-tap-as-a-service
