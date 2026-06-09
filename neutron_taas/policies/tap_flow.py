@@ -10,10 +10,9 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-from oslo_policy import policy
-
-from neutron.conf.policies import base
 from neutron_lib.policy import RULE_ADMIN_OR_OWNER
+from neutron_lib.policy import rules as lib_rules
+from oslo_policy import policy
 
 
 COLLECTION_PATH = '/taas/tap_flows'
@@ -26,7 +25,7 @@ The neutron TAAS API now supports Secure RBAC default roles.
 rules = [
     policy.DocumentedRuleDefault(
         name='create_tap_flow',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a tap flow',
         operations=[
@@ -43,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_tap_flow',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a tap flow',
         operations=[
@@ -60,7 +59,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_tap_flow',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Show a tap flow',
         operations=[
@@ -77,7 +76,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_tap_flow',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a tap flow',
         operations=[

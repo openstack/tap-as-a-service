@@ -10,9 +10,8 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 COLLECTION_PATH = '/taas/tap_mirrors'
@@ -21,7 +20,7 @@ RESOURCE_PATH = '/taas/tap_mirrors/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_tap_mirror',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a Tap Mirror',
         operations=[
@@ -33,7 +32,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_tap_mirror',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a Tap Mirror',
         operations=[
@@ -45,7 +44,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_tap_mirror',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Show a Tap Mirror',
         operations=[
@@ -61,7 +60,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_tap_mirror',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a Tap Mirror',
         operations=[
