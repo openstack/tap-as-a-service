@@ -11,6 +11,7 @@ oslo.policy>=5.0.0 # Apache-2.0
 oslo.serialization>=5.5.0 # Apache-2.0
 oslo.service>=4.2.1 # Apache-2.0
 oslo.utils>=7.3.0 # Apache-2.0
+oslo.versionedobjects>=1.31.2 # Apache-2.0
 ovsdbapp>=2.17.0 # Apache-2.0
 ovs>3.3.0 # Apache-2.0
 SQLAlchemy>=1.4.23 # MIT
