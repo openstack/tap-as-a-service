@@ -40,7 +40,6 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         return directory.get_plugin()
 
     @db_api.retry_if_session_inactive()
-    @db_api.CONTEXT_READER
     def _get_tap_service(self, context, id):
         try:
             return model_query.get_by_id(context, taas_model.TapService, id)
@@ -48,7 +47,6 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
             raise taas_exc.TapServiceNotFound(tap_id=id)
 
     @db_api.retry_if_session_inactive()
-    @db_api.CONTEXT_READER
     def _get_tap_id_association(self, context, tap_service_id):
         try:
             query = model_query.query_with_hooks(context,
@@ -59,7 +57,6 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         except exc.NoResultFound:
             raise taas_exc.TapServiceNotFound(tap_id=tap_service_id)
 
-    @db_api.CONTEXT_READER
     def _get_tap_flow(self, context, id):
         try:
             return model_query.get_by_id(context, taas_model.TapFlow, id)
@@ -224,12 +221,14 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         if not count:
             raise taas_exc.TapFlowNotFound(flow_id=id)
 
+    @db_api.CONTEXT_READER
     def get_tap_service(self, context, id, fields=None):
         LOG.debug("get_tap_service() called")
 
         t_s = self._get_tap_service(context, id)
         return self._make_tap_service_dict(t_s, fields)
 
+    @db_api.CONTEXT_READER
     def get_tap_id_association(self, context, tap_service_id):
         LOG.debug("get_tap_id_association() called")
 
@@ -271,19 +270,21 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         return port
 
     @db_api.retry_if_session_inactive()
-    @db_api.CONTEXT_WRITER
     def update_tap_service(self, context, id, tap_service):
         LOG.debug("update_tap_service() called")
         t_s = tap_service['tap_service']
-        tap_service_db = self._get_tap_service(context, id)
-        tap_service_db.update(t_s)
+
+        with db_api.CONTEXT_WRITER.using(context):
+            tap_service_db = self._get_tap_service(context, id)
+            tap_service_db.update(t_s)
         return self._make_tap_service_dict(tap_service_db)
 
     @db_api.retry_if_session_inactive()
-    @db_api.CONTEXT_WRITER
     def update_tap_flow(self, context, id, tap_flow):
         LOG.debug("update_tap_flow() called")
         t_f = tap_flow['tap_flow']
-        tap_flow_db = self._get_tap_flow(context, id)
-        tap_flow_db.update(t_f)
+
+        with db_api.CONTEXT_WRITER.using(context):
+            tap_flow_db = self._get_tap_flow(context, id)
+            tap_flow_db.update(t_f)
         return self._make_tap_flow_dict(tap_flow_db)
