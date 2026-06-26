@@ -11,13 +11,9 @@
 # under the License.
 
 
-import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
-from neutron_lib.api.definitions import tap_mirror as mirror_extension
 from neutron_lib.db import api as db_api
-from neutron_lib.db import constants as db_const
-from neutron_lib.db import model_base
 from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import taas as taas_exc
@@ -27,33 +23,11 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
+from neutron_taas.db.models import tap_mirror as tap_m_model
 from neutron_taas.extensions import tap_mirror as tap_m_extension
 
+
 LOG = logging.getLogger(__name__)
-
-
-class TapMirror(model_base.BASEV2, model_base.HasId,
-                model_base.HasProjectNoIndex):
-    """Represents a Tap Mirror
-
-    A Tap Mirror can be a GRE or ERSPAN tunnel representation.
-    """
-
-    __tablename__ = 'tap_mirrors'
-
-    name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
-    description = sa.Column(sa.String(db_const.DESCRIPTION_FIELD_SIZE))
-    port_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
-                        nullable=False)
-    directions = sa.Column(sa.String(255), nullable=False)
-    remote_ip = sa.Column(sa.String(db_const.IP_ADDR_FIELD_SIZE),
-                          nullable=False)
-    mirror_type = sa.Column(sa.Enum('erspanv1', 'gre',
-                                    name='tapmirrors_type'),
-                            nullable=False)
-    api_collections = [mirror_extension.COLLECTION_NAME]
-    collection_resource_map = {
-        mirror_extension.COLLECTION_NAME: mirror_extension.RESOURCE_NAME}
 
 
 class Taas_mirror_db_mixin(tap_m_extension.TapMirrorBase):
@@ -83,7 +57,7 @@ class Taas_mirror_db_mixin(tap_m_extension.TapMirrorBase):
         fields = tap_mirror['tap_mirror']
         project_id = fields.get('project_id')
         with db_api.CONTEXT_WRITER.using(context):
-            tap_mirror_db = TapMirror(
+            tap_mirror_db = tap_m_model.TapMirror(
                 id=uuidutils.generate_uuid(),
                 project_id=project_id,
                 name=fields.get('name'),
@@ -99,11 +73,12 @@ class Taas_mirror_db_mixin(tap_m_extension.TapMirrorBase):
             return self._make_tap_mirror_dict(tap_mirror_db)
 
     def _get_tap_mirror(self, context, id):
-        with db_api.CONTEXT_READER.using(context):
-            try:
-                return model_query.get_by_id(context, TapMirror, id)
-            except exc.NoResultFound:
-                raise taas_exc.TapMirrorNotFound(mirror_id=id)
+        try:
+            return model_query.get_by_id(context,
+                                         tap_m_model.TapMirror,
+                                         id)
+        except exc.NoResultFound:
+            raise taas_exc.TapMirrorNotFound(mirror_id=id)
 
     @log_helpers.log_method_call
     def get_tap_mirror(self, context, id, fields=None):
@@ -117,14 +92,15 @@ class Taas_mirror_db_mixin(tap_m_extension.TapMirrorBase):
                         sorts=None, limit=None, marker=None,
                         page_reverse=False):
         with db_api.CONTEXT_READER.using(context):
-            return model_query.get_collection(context, TapMirror,
+            return model_query.get_collection(context, tap_m_model.TapMirror,
                                               self._make_tap_mirror_dict,
                                               filters=filters, fields=fields)
 
     @log_helpers.log_method_call
     def delete_tap_mirror(self, context, id):
         with db_api.CONTEXT_WRITER.using(context):
-            count = context.session.query(TapMirror).filter_by(id=id).delete()
+            count = context.session.query(
+                tap_m_model.TapMirror).filter_by(id=id).delete()
 
         if not count:
             raise taas_exc.TapMirrorNotFound(mirror_id=id)
@@ -133,7 +109,8 @@ class Taas_mirror_db_mixin(tap_m_extension.TapMirrorBase):
     @log_helpers.log_method_call
     def update_tap_mirror(self, context, id, tap_mirror):
         t_m = tap_mirror['tap_mirror']
+
         with db_api.CONTEXT_WRITER.using(context):
             tap_mirror_db = self._get_tap_mirror(context, id)
             tap_mirror_db.update(t_m)
-            return self._make_tap_mirror_dict(tap_mirror_db)
+        return self._make_tap_mirror_dict(tap_mirror_db)

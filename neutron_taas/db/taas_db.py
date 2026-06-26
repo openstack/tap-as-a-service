@@ -15,14 +15,11 @@
 # under the License.
 
 
-import sqlalchemy as sa
-from sqlalchemy import orm
 from sqlalchemy.orm import exc
 
 from neutron.db.models import segment
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
-from neutron_lib.db import model_base
 from neutron_lib.db import model_query
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import taas as taas_exc
@@ -31,58 +28,10 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
+from neutron_taas.db.models import taas as taas_model
 from neutron_taas.extensions import taas as taas_extension
 
 LOG = logging.getLogger(__name__)
-
-
-class TapService(model_base.BASEV2, model_base.HasId,
-                 model_base.HasProjectNoIndex):
-
-    # Represents a V2 TapService Object
-    __tablename__ = 'tap_services'
-    name = sa.Column(sa.String(255), nullable=True)
-    description = sa.Column(sa.String(1024), nullable=True)
-    port_id = sa.Column(sa.String(36), nullable=False)
-    status = sa.Column(sa.String(16), nullable=False,
-                       server_default=constants.ACTIVE)
-
-
-class TapFlow(model_base.BASEV2, model_base.HasId,
-              model_base.HasProjectNoIndex):
-
-    # Represents a V2 TapFlow Object
-    __tablename__ = 'tap_flows'
-    name = sa.Column(sa.String(255), nullable=True)
-    description = sa.Column(sa.String(1024), nullable=True)
-    tap_service_id = sa.Column(sa.String(36),
-                               sa.ForeignKey("tap_services.id",
-                                             ondelete="CASCADE"),
-                               nullable=False)
-    source_port = sa.Column(sa.String(36), nullable=False)
-    direction = sa.Column(sa.Enum('IN', 'OUT', 'BOTH',
-                                  name='tapflows_direction'),
-                          nullable=False)
-    status = sa.Column(sa.String(16), nullable=False,
-                       server_default=constants.ACTIVE)
-    vlan_filter = sa.Column(sa.String(1024), nullable=True)
-
-
-class TapIdAssociation(model_base.BASEV2):
-
-    # Internal mapping between a TAP Service and
-    # id to be used by the Agents
-    __tablename__ = 'tap_id_associations'
-    tap_service_id = sa.Column(sa.String(36),
-                               sa.ForeignKey("tap_services.id",
-                                             ondelete='SET NULL'),
-                               nullable=True)
-    taas_id = sa.Column(sa.Integer, primary_key=True, unique=True)
-    tap_service = orm.relationship(
-        TapService,
-        backref=orm.backref("tap_service_id",
-                            lazy="joined"),
-        primaryjoin='TapService.id==TapIdAssociation.tap_service_id')
 
 
 class Taas_db_Mixin(taas_extension.TaasPluginBase):
@@ -94,7 +43,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
     @db_api.CONTEXT_READER
     def _get_tap_service(self, context, id):
         try:
-            return model_query.get_by_id(context, TapService, id)
+            return model_query.get_by_id(context, taas_model.TapService, id)
         except exc.NoResultFound:
             raise taas_exc.TapServiceNotFound(tap_id=id)
 
@@ -102,16 +51,18 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
     @db_api.CONTEXT_READER
     def _get_tap_id_association(self, context, tap_service_id):
         try:
-            query = model_query.query_with_hooks(context, TapIdAssociation)
-            return query.filter(TapIdAssociation.tap_service_id ==
-                                tap_service_id).one()
+            query = model_query.query_with_hooks(context,
+                                                 taas_model.TapIdAssociation)
+            return query.filter(
+                taas_model.TapIdAssociation.tap_service_id ==
+                tap_service_id).one()
         except exc.NoResultFound:
             raise taas_exc.TapServiceNotFound(tap_id=tap_service_id)
 
     @db_api.CONTEXT_READER
     def _get_tap_flow(self, context, id):
         try:
-            return model_query.get_by_id(context, TapFlow, id)
+            return model_query.get_by_id(context, taas_model.TapFlow, id)
         except exc.NoResultFound:
             raise taas_exc.TapFlowNotFound(flow_id=id)
 
@@ -172,7 +123,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         LOG.debug("create_tap_service() called")
         t_s = tap_service['tap_service']
         tenant_id = t_s['tenant_id']
-        tap_service_db = TapService(
+        tap_service_db = taas_model.TapService(
             id=uuidutils.generate_uuid(),
             tenant_id=tenant_id,
             name=t_s['name'],
@@ -186,7 +137,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
 
     def _rebuild_taas_id_allocation_range(self, context):
         query = context.session.query(
-            TapIdAssociation).all()
+            taas_model.TapIdAssociation).all()
 
         allocate_taas_id_list = [_q.taas_id for _q in query]
         first_taas_id = cfg.CONF.taas.vlan_range_start
@@ -197,17 +148,18 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
 
         for _id in vaild_taas_id_set:
             # new taas id
-            context.session.add(TapIdAssociation(
+            context.session.add(taas_model.TapIdAssociation(
                 taas_id=_id))
 
     def _allocate_taas_id_with_tap_service_id(self, context, tap_service_id):
-        query = context.session.query(TapIdAssociation).filter_by(
+        query = context.session.query(taas_model.TapIdAssociation).filter_by(
             tap_service_id=None).first()
         if not query:
             self._rebuild_taas_id_allocation_range(context)
             # try again
-            query = context.session.query(TapIdAssociation).filter_by(
-                tap_service_id=None).first()
+            query = context.session.query(
+                taas_model.TapIdAssociation).filter_by(
+                    tap_service_id=None).first()
 
         if query:
             query.update({"tap_service_id": tap_service_id})
@@ -237,7 +189,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
         tenant_id = t_f['tenant_id']
         # TODO(Vinay): Check for the tenant_id validation
         # TODO(Vinay): Check for the source port validation
-        tap_flow_db = TapFlow(
+        tap_flow_db = taas_model.TapFlow(
             id=uuidutils.generate_uuid(),
             tenant_id=tenant_id,
             name=t_f['name'],
@@ -257,7 +209,8 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
     def delete_tap_service(self, context, id):
         LOG.debug("delete_tap_service() called")
 
-        count = context.session.query(TapService).filter_by(id=id).delete()
+        count = context.session.query(
+            taas_model.TapService).filter_by(id=id).delete()
 
         if not count:
             raise taas_exc.TapServiceNotFound(tap_id=id)
@@ -265,7 +218,8 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
     @db_api.CONTEXT_WRITER
     def delete_tap_flow(self, context, id):
         LOG.debug("delete_tap_flow() called")
-        count = context.session.query(TapFlow).filter_by(id=id).delete()
+        count = context.session.query(
+            taas_model.TapFlow).filter_by(id=id).delete()
 
         if not count:
             raise taas_exc.TapFlowNotFound(flow_id=id)
@@ -295,7 +249,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
                          sorts=None, limit=None, marker=None,
                          page_reverse=False):
         LOG.debug("get_tap_services() called")
-        return model_query.get_collection(context, TapService,
+        return model_query.get_collection(context, taas_model.TapService,
                                           self._make_tap_service_dict,
                                           filters=filters, fields=fields)
 
@@ -305,7 +259,7 @@ class Taas_db_Mixin(taas_extension.TaasPluginBase):
                       sorts=None, limit=None, marker=None,
                       page_reverse=False):
         LOG.debug("get_tap_flows() called")
-        return model_query.get_collection(context, TapFlow,
+        return model_query.get_collection(context, taas_model.TapFlow,
                                           self._make_tap_flow_dict,
                                           filters=filters, fields=fields)
 
