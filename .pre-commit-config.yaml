@@ -4,29 +4,29 @@ default_language_version:
   python: python3
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: mixed-line-ending
         args: ['--fix', 'lf']
         exclude: '.*\.(svg)$'
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: debug-statements
       - id: check-yaml
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.3
+    rev: 1.9.4
     hooks:
       - id: bandit
         args: ['-n', '5', '-c', 'pyproject.toml']
   - repo: https://github.com/lucas-c/pre-commit-hooks
-    rev: v1.5.4
+    rev: v1.5.6
     hooks:
       - id: remove-tabs
         exclude: '.*\.(svg)$'
   - repo: https://opendev.org/openstack/hacking
-    rev: 6.1.0
+    rev: 8.1.0
     hooks:
       - id: hacking
         additional_dependencies: ['neutron-lib']
