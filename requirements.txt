@@ -17,7 +17,7 @@ SQLAlchemy>=1.4.23 # MIT
 tenacity>=6.0.0 # Apache-2.0
 
 # Due to transitive dependency handling issues on py313
-pyroute2>=0.7.3;sys_platform!='win32' # Apache-2.0 (+ dual licensed GPL2)
+pyroute2>=0.7.3 # Apache-2.0 (+ dual licensed GPL2)
 
 # Opt-in for neutron-lib consumption patches
 # http://lists.openstack.org/pipermail/openstack-dev/2018-September/135063.html
